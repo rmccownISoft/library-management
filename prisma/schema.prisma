@@ -86,11 +86,14 @@ model Patron {
 model Category {
   id        Int      @id @default(autoincrement())
   name      String   @unique
+  parentId  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  tools Tool[]
+  parent     Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children   Category[] @relation("CategoryHierarchy")
+  tools      Tool[]
 
   @@map("categories")
 }
