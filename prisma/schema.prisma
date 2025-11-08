@@ -1,0 +1,279 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String
+  mailingStreet  String
+  mailingCity    String
+  mailingState   String
+  mailingZipcode String
+  role           UserRole @default(VOLUNTEER)
+  active         Boolean  @default(true)
+  trainingDate   DateTime?
+  trainedById    Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  checkoutsPerformed   Checkout[]     @relation("CheckoutVolunteer")
+  checkinsPerformed    Checkout[]     @relation("CheckinVolunteer")
+  filesUploaded        File[]         @relation("FileUploader")
+  auditLogs            AuditLog[]
+  loginHistory         LoginHistory[]
+  overrideLogs         OverrideLog[]
+  volunteerFiles       File[]         @relation("VolunteerFiles")
+  damageReportsCreated DamageReport[] @relation("DamageReporter")
+  trainer              User?          @relation("TrainedBy", fields: [trainedById], references: [id], onDelete: SetNull)
+  trainees             User[]         @relation("TrainedBy")
+
+  @@map("users")
+}
+
+enum UserRole {
+  VOLUNTEER
+  ADMIN
+}
+
+// ============================================================================
+// PATRON MANAGEMENT
+// ============================================================================
+
+model Patron {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String?
+  phone          String?
+  mailingStreet  String
+  mailingCity    String
+  mailingState   String
+  mailingZipcode String
+  active         Boolean  @default(true)
+  blocked        Boolean  @default(false)
+  overdueCount   Int      @default(0)
+  damageCount    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  checkouts     Checkout[]
+  files         File[]     @relation("PatronFiles")
+
+  @@map("patrons")
+}
+
+// ============================================================================
+// TOOL INVENTORY
+// ============================================================================
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tools Tool[]
+
+  @@map("categories")
+}
+
+model Tool {
+  id              Int             @id @default(autoincrement())
+  name            String
+  description     String
+  categoryId      Int
+  quantity        Int             @default(1)
+  donor           String?
+  dateAdded       DateTime        @default(now())
+  conditionStatus ConditionStatus @default(GOOD)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  category       Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  checkouts      Checkout[]
+  files          File[]         @relation("ToolFiles")
+  damageReports  DamageReport[]
+
+  @@map("tools")
+}
+
+enum ConditionStatus {
+  GOOD
+  NEEDS_REPAIR
+  DAMAGED
+  LOST
+}
+
+// ============================================================================
+// CHECKOUT SYSTEM
+// ============================================================================
+
+model Checkout {
+  id                 Int             @id @default(autoincrement())
+  toolId             Int
+  patronId           Int
+  volunteerId        Int
+  checkoutDate       DateTime        @default(now())
+  dueDate            DateTime
+  checkinDate        DateTime?
+  checkinVolunteerId Int?
+  overrideNote       String?
+  checkoutPeriod     Int             // Days
+  status             CheckoutStatus  @default(CHECKED_OUT)
+  wasOverdue         Boolean         @default(false)
+  reminderSentAt     DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  // Relations
+  tool             Tool    @relation(fields: [toolId], references: [id], onDelete: Restrict)
+  patron           Patron  @relation(fields: [patronId], references: [id], onDelete: Restrict)
+  volunteer        User    @relation("CheckoutVolunteer", fields: [volunteerId], references: [id], onDelete: Restrict)
+  checkinVolunteer User?   @relation("CheckinVolunteer", fields: [checkinVolunteerId], references: [id], onDelete: Restrict)
+
+  @@map("checkouts")
+}
+
+enum CheckoutStatus {
+  CHECKED_OUT
+  RETURNED
+  OVERDUE
+}
+
+// ============================================================================
+// DAMAGE TRACKING
+// ============================================================================
+
+model DamageReport {
+  id          Int      @id @default(autoincrement())
+  toolId      Int
+  patronId    Int?
+  notes       String
+  reportedAt  DateTime @default(now())
+  reportedBy  Int
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tool     Tool    @relation(fields: [toolId], references: [id], onDelete: Restrict)
+  reporter User    @relation("DamageReporter", fields: [reportedBy], references: [id], onDelete: Restrict)
+  files    File[]  @relation("DamageReportFiles")
+
+  @@map("damage_reports")
+}
+
+// ============================================================================
+// FILE MANAGEMENT
+// ============================================================================
+
+model File {
+  id             Int        @id @default(autoincrement())
+  entityType     EntityType
+  entityId       Int
+  filePath       String
+  fileName       String
+  fileType       String
+  label          String?
+  uploadedAt     DateTime   @default(now())
+  uploadedBy     Int
+
+  // Relations
+  uploader       User           @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  patron         Patron?        @relation("PatronFiles", fields: [entityId], references: [id], onDelete: Cascade)
+  volunteer      User?          @relation("VolunteerFiles", fields: [entityId], references: [id], onDelete: Cascade)
+  tool           Tool?          @relation("ToolFiles", fields: [entityId], references: [id], onDelete: Cascade)
+  damageReport   DamageReport?  @relation("DamageReportFiles", fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("files")
+}
+
+enum EntityType {
+  PATRON
+  VOLUNTEER
+  TOOL
+  DAMAGE_REPORT
+}
+
+// ============================================================================
+// AUDIT & LOGGING
+// ============================================================================
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  entityType EntityType
+  entityId   Int
+  userId     Int
+  action     AuditAction
+  changes    String      // JSON string of changes
+  timestamp  DateTime    @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model LoginHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  timestamp DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_history")
+}
+
+model OverrideLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  overrideType String
+  entityType   String
+  entityId     Int
+  reason       String
+  timestamp    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("override_logs")
+}
+
+// ============================================================================
+// SYSTEM SETTINGS
+// ============================================================================
+
+model SystemSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
