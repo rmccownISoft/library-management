@@ -1,9 +1,14 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
+	const searchQuery = url.searchParams.get('search') || ''
+
 	const [tools, categories] = await Promise.all([
 		prisma.tool.findMany({
+			where: searchQuery ? {
+				name: { contains: searchQuery }
+			} : undefined,
 			include: {
 				category: true
 			},
@@ -72,6 +77,7 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		tools,
-		categories: categoriesWithCounts
+		categories: categoriesWithCounts,
+		searchQuery
 	}
 }

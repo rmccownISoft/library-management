@@ -6,6 +6,12 @@
     // Selected category state (null means "All Tools")
     let selectedCategoryId = $state<number | null>(null)
 
+    // Search query state for input field
+    let searchQuery = $state(data.searchQuery)
+    
+    // Active search query from server
+    const activeSearch = data.searchQuery
+
     // Build category hierarchy (root categories only)
     const rootCategories = $derived(
         data.categories.filter(cat => !cat.parentId)
@@ -76,9 +82,45 @@
 
     <!-- Tools Content -->
     <main class="p-8">
-        <h1 class="text-3xl font-bold mb-8 text-gray-900">
+        <h1 class="text-3xl font-bold mb-6 text-gray-900">
             {selectedCategoryId === null ? 'All Tools' : getCategoryName(selectedCategoryId)}
         </h1>
+
+        <!-- Search Box -->
+        <form method="GET" class="mb-8">
+            <div class="flex gap-2">
+                <input
+                    type="search"
+                    name="search"
+                    placeholder="Search tools by name..."
+                    bind:value={searchQuery}
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+                <button
+                    type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                    Search
+                </button>
+                {#if searchQuery || activeSearch}
+                    <button
+                        type="button"
+                        onclick={() => {
+                            searchQuery = ''
+                            window.location.href = '/tools'
+                        }}
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+                    >
+                        Clear
+                    </button>
+                {/if}
+            </div>
+            {#if activeSearch}
+                <p class="mt-2 text-sm text-gray-600">
+                    Showing results for "<span class="font-semibold">{activeSearch}</span>" - {filteredTools().length} tool{filteredTools().length !== 1 ? 's' : ''} found
+                </p>
+            {/if}
+        </form>
 
         {#if filteredTools().length === 0}
             <p class="text-gray-500 italic text-center py-8">No tools found</p>
