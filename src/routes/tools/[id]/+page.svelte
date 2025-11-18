@@ -107,7 +107,7 @@
 			<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
 				{#each data.tool.files as file}
 					<img 
-						src="/uploads/{file.filePath}" 
+						src="/api/files/{file.id}" 
 						alt={file.fileName}
 						class="w-full h-48 object-cover rounded-lg border border-gray-200"
 					/>

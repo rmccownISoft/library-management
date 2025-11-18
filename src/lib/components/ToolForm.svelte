@@ -24,6 +24,7 @@
 	}: Props = $props()
     
     let isSubmitting = $state(false)
+	let selectedFiles = $state<FileList | null>(null)
 
 	// Get field value (priority: form values > tool data > default)
 	function getValue(field: string, defaultValue: any = '') {
@@ -71,6 +72,7 @@
 
 <form 
 	method="POST"
+	enctype="multipart/form-data"
 	use:enhance={() => {
 		isSubmitting = true;
 		return async ({ update }) => {
@@ -193,6 +195,49 @@
 		/>
 	</div>
 
+	<!-- File Upload -->
+	<div class="mb-6">
+		<label class="block text-sm font-medium text-gray-700 mb-2">
+			Upload Picture(s)
+		</label>
+		<input
+			type="file"
+			id="toolFiles"
+			name="toolFiles"
+			multiple
+			class="sr-only"
+			onchange={(e) => {
+				const target = e.target as HTMLInputElement;
+				selectedFiles = target.files;
+			}}
+		/>
+		<label
+			for="toolFiles"
+			class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors font-medium text-gray-700"
+		>
+			<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+			</svg>
+			{selectedFiles && selectedFiles.length > 0 
+				? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`
+				: 'Choose Files'}
+		</label>
+		{#if selectedFiles && selectedFiles.length > 0}
+			<div class="mt-2 text-sm text-gray-600">
+				{#each Array.from(selectedFiles) as file}
+					<div class="flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+						<span>{file.name}</span>
+						<span class="text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
+	
+	
 	<!-- Form Actions -->
 	<div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
 		<a

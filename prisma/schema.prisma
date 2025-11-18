@@ -190,7 +190,6 @@ model DamageReport {
 model File {
   id             Int        @id @default(autoincrement())
   entityType     EntityType
-  entityId       Int
   filePath       String
   fileName       String
   fileType       String
@@ -198,12 +197,18 @@ model File {
   uploadedAt     DateTime   @default(now())
   uploadedBy     Int
 
+  // Separate nullable foreign keys for each entity type
+  patronId       Int?
+  volunteerId    Int?
+  toolId         Int?
+  damageReportId Int?
+
   // Relations
   uploader       User           @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
-  patron         Patron?        @relation("PatronFiles", fields: [entityId], references: [id], onDelete: Cascade)
-  volunteer      User?          @relation("VolunteerFiles", fields: [entityId], references: [id], onDelete: Cascade)
-  tool           Tool?          @relation("ToolFiles", fields: [entityId], references: [id], onDelete: Cascade)
-  damageReport   DamageReport?  @relation("DamageReportFiles", fields: [entityId], references: [id], onDelete: Cascade)
+  patron         Patron?        @relation("PatronFiles", fields: [patronId], references: [id], onDelete: Cascade)
+  volunteer      User?          @relation("VolunteerFiles", fields: [volunteerId], references: [id], onDelete: Cascade)
+  tool           Tool?          @relation("ToolFiles", fields: [toolId], references: [id], onDelete: Cascade)
+  damageReport   DamageReport?  @relation("DamageReportFiles", fields: [damageReportId], references: [id], onDelete: Cascade)
 
   @@map("files")
 }
