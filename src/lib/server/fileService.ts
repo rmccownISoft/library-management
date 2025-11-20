@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { dev } from '$app/environment';
 import prisma from '$lib/prisma';
 import { EntityType } from '$generated/prisma/enums';
+import sharp from 'sharp';
 
 /**
  * Configuration for file upload
@@ -14,6 +15,47 @@ export interface FileUploadConfig {
 	uploadedBy: number;
 	label?: string;
 	basePath?: string;
+}
+
+/**
+ * Image optimization settings
+ * Used to resize and compress images before saving
+ */
+const IMAGE_OPTIMIZATION = {
+	maxWidth: 1200,        // Maximum width in pixels
+	quality: 85,           // JPEG/WebP quality (1-100)
+	stripMetadata: true,   // Remove EXIF data to reduce file size and protect privacy
+} as const;
+
+/**
+ * Checks if a file is an image based on MIME type
+ */
+function isImage(mimeType: string): boolean {
+	return mimeType.startsWith('image/');
+}
+
+/**
+ * Optimizes an image buffer using sharp
+ * - Resizes to max width while maintaining aspect ratio
+ * - Compresses with specified quality
+ * - Strips metadata
+ * - Converts to JPEG for consistent format and best compression
+ * 
+ * @param buffer - Original image buffer
+ * @returns Optimized image buffer
+ */
+async function optimizeImage(buffer: Buffer): Promise<Buffer> {
+	return sharp(buffer)
+		.resize(IMAGE_OPTIMIZATION.maxWidth, null, {
+			fit: 'inside',
+			withoutEnlargement: true // Don't upscale small images
+		})
+		.jpeg({
+			quality: IMAGE_OPTIMIZATION.quality,
+			mozjpeg: true // Use mozjpeg for better compression
+		})
+		.withMetadata(IMAGE_OPTIMIZATION.stripMetadata ? {} : undefined)
+		.toBuffer();
 }
 
 /**
@@ -86,12 +128,28 @@ export async function writeFileAndPrismaCreate(
 	mkdirSync(fullPath, { recursive: true });
 	
 	// Generate unique filename
-	const fileExtension = extname(file.name);
+	const originalExtension = extname(file.name);
+	const arrayBuffer = await file.arrayBuffer();
+	let buffer: Buffer = Buffer.from(new Uint8Array(arrayBuffer));
+	let fileExtension = originalExtension;
+	let actualFileType = file.type || 'application/octet-stream';
+	
+	// Optimize image if it's an image file
+	if (isImage(file.type)) {
+		try {
+			buffer = await optimizeImage(buffer);
+			fileExtension = '.jpg'; // Always save optimized images as JPEG
+			actualFileType = 'image/jpeg';
+		} catch (error) {
+			console.warn('Failed to optimize image, saving original:', error);
+			// Continue with original buffer and extension
+		}
+	}
+	
 	const uniqueFileName = randomUUID() + fileExtension;
 	const filePath = join(fullPath, uniqueFileName);
 	
 	// Write file to filesystem
-	const buffer = Buffer.from(await file.arrayBuffer());
 	writeFileSync(filePath, buffer);
 	
 	// Create File record in database using Prisma
@@ -107,7 +165,7 @@ export async function writeFileAndPrismaCreate(
 			[idField]: config.entityId,
 			filePath: filePath,
 			fileName: file.name, // Original filename
-			fileType: file.type || 'application/octet-stream',
+			fileType: actualFileType, // Use actual type (may be converted to jpeg)
 			label: config.label || null,
 			uploadedBy: config.uploadedBy
 		}
