@@ -36,8 +36,8 @@ export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData()
 		console.log('form data: ', formData)
-		// Extract files from form data 
-		const files = formData.getAll('toolFiles') as Array<File>
+		// Extract files from form data and filter out empty files
+		const files = (formData.getAll('toolFiles') as Array<File>).filter(file => file.size > 0)
 		console.log('extracted files: ', files)
 
 		// Extract and validate form data
