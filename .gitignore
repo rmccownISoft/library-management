@@ -40,5 +40,4 @@ portainer_stack_volume.yml
 /dist
 *.log
 *.heapsnapshot
-*package-lock.json
-*.json
+
