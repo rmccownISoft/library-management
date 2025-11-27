@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types'
+    import Button from '$lib/components/Button.svelte'
 
     let { data }: { data: PageData } = $props()
 
@@ -88,13 +89,9 @@
             </h1>
             
             <!-- Add New Tool Button (Admin Only) -->
-            <a 
-                href="/tools/new"
-                class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium"
-                style="display: inline-block; text-decoration: none;"
-            >
+            <Button variant="success" type="a" href="/tools/new">
                 + Add New Tool
-            </a>
+            </Button>
         </div>
 
         <!-- Search Box -->
