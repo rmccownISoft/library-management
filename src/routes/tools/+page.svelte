@@ -90,7 +90,8 @@
             <!-- Add New Tool Button (Admin Only) -->
             <a 
                 href="/tools/new"
-                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium"
+                style="display: inline-block; text-decoration: none;"
             >
                 + Add New Tool
             </a>
