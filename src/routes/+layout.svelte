@@ -1,6 +1,6 @@
 <script>
 	import { page } from '$app/state'
-
+	import '../app.css'
 
 	let { children } = $props()
 </script>
