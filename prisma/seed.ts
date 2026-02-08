@@ -77,7 +77,8 @@ async function main() {
   // Create Patrons
   const patron1 = await prisma.patron.create({
     data: {
-      name: 'Alice Builder',
+      firstName: 'Alice',
+      lastName: 'Builder',
       email: 'alice@email.com',
       phone: '555-1001',
       mailingStreet: '100 Construction Way',
@@ -89,7 +90,8 @@ async function main() {
 
   const patron2 = await prisma.patron.create({
     data: {
-      name: 'Bob Carpenter',
+      firstName: 'Bob',
+      lastName: 'Carpenter',
       email: 'bob@email.com',
       phone: '555-1002',
       mailingStreet: '200 Woodwork Lane',
@@ -101,7 +103,8 @@ async function main() {
 
   const patron3 = await prisma.patron.create({
     data: {
-      name: 'Carol Handyperson',
+      firstName: 'Carol',
+      lastName: 'Handyperson',
       phone: '555-1003',
       mailingStreet: '300 Fix-It Circle',
       mailingCity: 'Springfield',
