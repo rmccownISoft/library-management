@@ -41,6 +41,7 @@ model User {
   overrideLogs         OverrideLog[]
   volunteerFiles       File[]         @relation("VolunteerFiles")
   damageReportsCreated DamageReport[] @relation("DamageReporter")
+  patronsCreated       Patron[]       @relation("PatronCreator")
   trainer              User?          @relation("TrainedBy", fields: [trainedById], references: [id], onDelete: SetNull)
   trainees             User[]         @relation("TrainedBy")
 
@@ -58,7 +59,8 @@ enum UserRole {
 
 model Patron {
   id             Int      @id @default(autoincrement())
-  name           String
+  firstName      String
+  lastName       String
   email          String?
   phone          String?
   mailingStreet  String
@@ -69,12 +71,14 @@ model Patron {
   blocked        Boolean  @default(false)
   overdueCount   Int      @default(0)
   damageCount    Int      @default(0)
+  createdBy      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
   checkouts     Checkout[]
   files         File[]     @relation("PatronFiles")
+  creator       User?      @relation("PatronCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@map("patrons")
 }
