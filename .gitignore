@@ -41,3 +41,4 @@ portainer_stack_volume.yml
 *.log
 *.heapsnapshot
 
+*.md
