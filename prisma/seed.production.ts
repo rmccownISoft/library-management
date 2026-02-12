@@ -15,7 +15,11 @@ async function main() {
   await prisma.damageReport.deleteMany();
   await prisma.file.deleteMany();
   await prisma.tool.deleteMany();
-  await prisma.category.deleteMany();
+  
+  // Delete categories: children first, then parents (due to self-referential FK)
+  await prisma.category.deleteMany({ where: { parentId: { not: null } } });
+  await prisma.category.deleteMany({ where: { parentId: null } });
+  
   await prisma.patron.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.loginHistory.deleteMany();
