@@ -25,6 +25,26 @@
 		if (!active) return 'Inactive'
 		return 'Active'
 	}
+
+	// Calculate active checkouts
+	const activeCheckouts = $derived(
+		data.patron.checkouts?.filter(c => c.status === 'CHECKED_OUT').length || 0
+	)
+
+	// Get checkout status color
+	function getCheckoutStatusColor(status: string) {
+		switch (status) {
+			case 'CHECKED_OUT': return 'bg-blue-100 text-blue-800'
+			case 'RETURNED': return 'bg-green-100 text-green-800'
+			case 'OVERDUE': return 'bg-red-100 text-red-800'
+			default: return 'bg-gray-100 text-gray-800'
+		}
+	}
+
+	// Format checkout status text
+	function formatStatus(status: string) {
+		return status.replace('_', ' ')
+	}
 </script>
 
 <svelte:head>
@@ -50,6 +70,14 @@
 			
 			<!-- Action Buttons -->
 			<div class="flex gap-2">
+				{#if data.patron.active && !data.patron.blocked}
+					<a 
+						href="/checkout?patronId={data.patron.id}"
+						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+					>
+						Checkout Tools
+					</a>
+				{/if}
 				<a 
 					href="/patrons/{data.patron.id}/edit"
 					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -129,7 +157,7 @@
 			</div>
 			
 			<div class="text-center">
-				<div class="text-2xl font-bold text-gray-900">0</div>
+				<div class="text-2xl font-bold text-gray-900">{activeCheckouts}</div>
 				<div class="text-sm text-gray-600">Active Checkouts</div>
 			</div>
 		</div>
@@ -162,12 +190,62 @@
 		</div>
 	{/if}
 
-	<!-- Checkout History Placeholder -->
+	<!-- Checkout History -->
 	<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Checkout History</h2>
-		<div class="text-center py-8 text-gray-500">
-			<p>Checkout history will be displayed here once the checkout system is implemented.</p>
-		</div>
+		
+		{#if data.patron.checkouts && data.patron.checkouts.length > 0}
+			<div class="overflow-x-auto">
+				<table class="w-full">
+					<thead>
+						<tr class="border-b border-gray-200">
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Tool</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Category</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Checked Out</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Due Date</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Returned</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.patron.checkouts as checkout}
+							<tr class="border-b border-gray-100 hover:bg-gray-50">
+								<td class="py-3 px-4">
+									<a href="/tools/{checkout.tool.id}" class="text-blue-600 hover:underline font-medium">
+										{checkout.tool.name}
+									</a>
+								</td>
+								<td class="py-3 px-4 text-sm text-gray-600">
+									{checkout.tool.category.name}
+								</td>
+								<td class="py-3 px-4 text-sm text-gray-600">
+									{formatDate(checkout.checkoutDate)}
+								</td>
+								<td class="py-3 px-4 text-sm text-gray-600">
+									{formatDate(checkout.dueDate)}
+								</td>
+								<td class="py-3 px-4 text-sm text-gray-600">
+									{#if checkout.checkinDate}
+										{formatDate(checkout.checkinDate)}
+									{:else}
+										<span class="text-gray-400">—</span>
+									{/if}
+								</td>
+								<td class="py-3 px-4">
+									<span class="px-2 py-1 rounded-full text-xs font-medium {getCheckoutStatusColor(checkout.status)}">
+										{formatStatus(checkout.status)}
+									</span>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<div class="text-center py-8 text-gray-500">
+				<p>No checkout history yet</p>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Account Details -->
