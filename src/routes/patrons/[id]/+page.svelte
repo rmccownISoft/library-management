@@ -1,7 +1,15 @@
 <script lang="ts">
 	import type { PageData } from './$types'
+	import ConfirmModal from '$lib/components/ConfirmModal.svelte'
+	import { invalidateAll } from '$app/navigation'
 
 	let { data } = $props<{ data: PageData }>()
+	
+	// Check-in modal state
+	let showCheckinModal = $state(false)
+	let selectedCheckout = $state<{ id: number; toolName: string } | null>(null)
+	let checkinError = $state<string | null>(null)
+	let checkinSuccess = $state<string | null>(null)
 	
 	// Format date helper
 	function formatDate(date: Date | string) {
@@ -45,6 +53,68 @@
 	function formatStatus(status: string) {
 		return status.replace('_', ' ')
 	}
+
+	// Open check-in modal
+	function openCheckinModal(checkoutId: number, toolName: string) {
+		selectedCheckout = { id: checkoutId, toolName }
+		showCheckinModal = true
+		checkinError = null
+		checkinSuccess = null
+	}
+
+	// Close check-in modal
+	function closeCheckinModal() {
+		showCheckinModal = false
+		selectedCheckout = null
+	}
+
+	// Handle check-in confirmation
+	async function handleCheckin() {
+		if (!selectedCheckout) return
+
+		try {
+			const response = await fetch('/api/checkin', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					checkoutId: selectedCheckout.id
+				})
+			})
+
+			const result = await response.json()
+
+			if (!response.ok) {
+				throw new Error(result.error || 'Failed to check in item')
+			}
+
+			// Show success message
+			checkinSuccess = result.message
+			if (result.wasOverdue) {
+				checkinSuccess += ' (Item was overdue)'
+			}
+
+			// Close modal
+			closeCheckinModal()
+
+			// Refresh the page data
+			await invalidateAll()
+
+			// Clear success message after 5 seconds
+			setTimeout(() => {
+				checkinSuccess = null
+			}, 5000)
+
+		} catch (error) {
+			checkinError = error instanceof Error ? error.message : 'Failed to check in item'
+		}
+	}
+
+	// Determine if checkout is overdue
+	function isOverdue(dueDate: Date | string) {
+		return new Date(dueDate) < new Date()
+	}
 </script>
 
 <svelte:head>
@@ -52,6 +122,18 @@
 </svelte:head>
 
 <div class="max-w-4xl mx-auto p-8">
+	<!-- Success Message -->
+	{#if checkinSuccess}
+		<div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+			<div class="flex items-center">
+				<svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+				</svg>
+				<p class="text-green-800 font-medium">{checkinSuccess}</p>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Header -->
 	<div class="mb-8">
 		<a href="/patrons" class="text-blue-600 hover:underline mb-4 inline-block">
@@ -205,6 +287,7 @@
 							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Due Date</th>
 							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Returned</th>
 							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
+							<th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -221,8 +304,13 @@
 								<td class="py-3 px-4 text-sm text-gray-600">
 									{formatDate(checkout.checkoutDate)}
 								</td>
-								<td class="py-3 px-4 text-sm text-gray-600">
-									{formatDate(checkout.dueDate)}
+								<td class="py-3 px-4 text-sm">
+									<span class={isOverdue(checkout.dueDate) && checkout.status === 'CHECKED_OUT' ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+										{formatDate(checkout.dueDate)}
+									</span>
+									{#if isOverdue(checkout.dueDate) && checkout.status === 'CHECKED_OUT'}
+										<span class="ml-1 text-red-600 text-xs">(Overdue)</span>
+									{/if}
 								</td>
 								<td class="py-3 px-4 text-sm text-gray-600">
 									{#if checkout.checkinDate}
@@ -235,6 +323,19 @@
 									<span class="px-2 py-1 rounded-full text-xs font-medium {getCheckoutStatusColor(checkout.status)}">
 										{formatStatus(checkout.status)}
 									</span>
+								</td>
+								<td class="py-3 px-4">
+									{#if checkout.status === 'CHECKED_OUT'}
+										<button
+											type="button"
+											onclick={() => openCheckinModal(checkout.id, checkout.tool.name)}
+											class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+										>
+											Check In
+										</button>
+									{:else}
+										<span class="text-gray-400 text-sm">—</span>
+									{/if}
 								</td>
 							</tr>
 						{/each}
@@ -265,3 +366,35 @@
 		</div>
 	</div>
 </div>
+
+<!-- Check-in Confirmation Modal -->
+{#if showCheckinModal && selectedCheckout}
+	<ConfirmModal
+		title="Confirm Check-In"
+		confirmText="Check In"
+		cancelText="Cancel"
+		confirmButtonClass="bg-green-600 hover:bg-green-700"
+		onConfirm={handleCheckin}
+		onCancel={closeCheckinModal}
+	>
+		<div class="space-y-3">
+			<p class="text-gray-700">
+				Are you sure you want to check in the following tool?
+			</p>
+			
+			<div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+				<p class="font-semibold text-gray-900">{selectedCheckout.toolName}</p>
+			</div>
+
+			{#if checkinError}
+				<div class="bg-red-50 border border-red-200 rounded-lg p-3">
+					<p class="text-red-800 text-sm">{checkinError}</p>
+				</div>
+			{/if}
+			
+			<p class="text-sm text-gray-600">
+				This action cannot be undone.
+			</p>
+		</div>
+	</ConfirmModal>
+{/if}
