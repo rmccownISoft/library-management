@@ -47,9 +47,6 @@
 			<button type="submit" class="login-button">Log In</button>
 		</form>
 
-		<p class="help-text">
-			Use credentials: <strong>admin</strong> / admin123 or <strong>volunteer</strong> / volunteer123
-		</p>
 	</div>
 </div>
 
