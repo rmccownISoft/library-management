@@ -14,6 +14,20 @@ export const load: PageServerLoad = async ({ params }) => {
 		include: {
 			files: {
 				orderBy: { uploadedAt: 'desc' }
+			},
+			checkouts: {
+				include: {
+					tool: {
+						include: {
+							category: true
+						}
+					},
+					volunteer: true,
+					checkinVolunteer: true
+				},
+				orderBy: {
+					checkoutDate: 'desc'
+				}
 			}
 		}
 	})
