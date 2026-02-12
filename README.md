@@ -20,17 +20,20 @@ A tool library management system built with SvelteKit 2.0, Svelte 5, and Prisma.
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd library-management
 ```
 
 2. Install dependencies:
+
 ```bash
 pnpm install
 ```
 
 3. Set up the database:
+
 ```bash
 # Generate Prisma client
 pnpm exec prisma generate
@@ -43,6 +46,7 @@ pnpm exec tsx prisma/seed.ts
 ```
 
 4. Start the development server:
+
 ```bash
 pnpm dev
 ```
@@ -62,22 +66,26 @@ This guide covers deploying the application using PM2, a production process mana
 ### Deployment Steps
 
 1. **Clone the repository:**
+
 ```bash
 git clone <repository-url>
 cd library-management
 ```
 
 2. **Install dependencies:**
+
 ```bash
 pnpm install
 ```
 
 3. **Create data directories:**
+
 ```bash
 mkdir -p data uploads
 ```
 
 4. **Configure environment variables:**
+
 ```bash
 # Copy the example file
 cp .env.example .env
@@ -87,6 +95,7 @@ nano .env
 ```
 
 Set these values in `.env`:
+
 ```bash
 DATABASE_URL="file:./data/library.db"
 NODE_ENV="production"
@@ -96,6 +105,7 @@ HOST="0.0.0.0"
 ```
 
 5. **Set up the database:**
+
 ```bash
 # Generate Prisma client
 pnpm exec prisma generate
@@ -108,11 +118,13 @@ DATABASE_URL="file:./data/library.db" pnpm exec tsx prisma/seed.ts
 ```
 
 6. **Build the application:**
+
 ```bash
 pnpm build
 ```
 
 7. **Start with PM2:**
+
 ```bash
 # Start the application
 pm2 start build/index.js --name library-management
@@ -176,17 +188,20 @@ pm2 restart library-management
 For production deployments, it's recommended to use Nginx as a reverse proxy:
 
 1. **Install Nginx:**
+
 ```bash
 sudo apt update
 sudo apt install -y nginx
 ```
 
 2. **Create Nginx configuration:**
+
 ```bash
 sudo nano /etc/nginx/sites-available/library-management
 ```
 
 Add this configuration:
+
 ```nginx
 server {
     listen 80;
@@ -207,6 +222,7 @@ server {
 ```
 
 3. **Enable the site:**
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/library-management /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -214,12 +230,14 @@ sudo systemctl restart nginx
 ```
 
 4. **Update .env with your domain:**
+
 ```bash
 nano .env
 # Uncomment and set: ORIGIN="http://yourdomain.com"
 ```
 
 Then restart the application:
+
 ```bash
 pnpm build
 pm2 restart library-management
@@ -246,15 +264,18 @@ pm2 restart library-management
 ### Troubleshooting
 
 **403 Forbidden errors on form submission:**
+
 - Ensure ORIGIN is set in .env if using a reverse proxy
 - Or disable CSRF checking in svelte.config.js (already configured in this project)
 
 **Database connection errors:**
+
 - Verify DATABASE_URL is set in .env
 - Ensure the data directory exists and is writable
 - Check that prisma generate has been run
 
 **Application won't start:**
+
 - Check PM2 logs: `pm2 logs library-management`
 - Verify the build was successful: `ls -la build/`
 - Ensure PORT 3000 is not already in use
@@ -274,11 +295,13 @@ This project includes Docker support for easy deployment to Ubuntu VMs or any Do
 ### Quick Start with Docker
 
 1. **Build the Docker image:**
+
 ```bash
 docker build -t library-management .
 ```
 
 2. **Run with docker-compose (recommended):**
+
 ```bash
 # Create data directories for persistence
 mkdir -p data uploads
@@ -290,6 +313,7 @@ docker-compose up -d
 The application will be available at `http://localhost:3000`
 
 3. **Or run with Docker directly:**
+
 ```bash
 # Create data directories
 mkdir -p data uploads
@@ -307,6 +331,7 @@ docker run -d \
 ### Docker Configuration
 
 The Docker setup includes:
+
 - **Multi-stage build** for optimized image size
 - **Node.js adapter** for standalone deployment
 - **Persistent volumes** for database and uploaded files
@@ -363,6 +388,7 @@ docker-compose exec app sh
 ### Deployment to Ubuntu VM
 
 1. **Install Docker on Ubuntu:**
+
 ```bash
 # Update packages
 sudo apt update
@@ -377,6 +403,7 @@ sudo usermod -aG docker $USER
 ```
 
 2. **Clone and deploy:**
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -397,6 +424,7 @@ docker-compose exec app sh -c "npx prisma migrate deploy"
 ```
 
 3. **Optional: Set up reverse proxy with Nginx:**
+
 ```bash
 # Install Nginx
 sudo apt install -y nginx
@@ -406,6 +434,7 @@ sudo nano /etc/nginx/sites-available/library-management
 ```
 
 Add this configuration:
+
 ```nginx
 server {
     listen 80;
@@ -426,6 +455,7 @@ server {
 ```
 
 Enable the site:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/library-management /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -456,6 +486,7 @@ The system manages:
 ## Current Features
 
 ### Tool Inventory Management ✅
+
 - Browse tools by hierarchical categories
 - Search tools by name
 - View tool details including:
@@ -468,6 +499,7 @@ The system manages:
 - Condition status tracking (Good, Needs Repair, Damaged, Lost)
 
 ### File Management ✅
+
 - Upload and attach files to tools, patrons, volunteers, and damage reports
 - File service with proper error handling
 - Support for multiple file types
@@ -529,9 +561,28 @@ pnpm exec prisma migrate dev   # Create migration
 pnpm exec prisma generate      # Generate client
 ```
 
+## Manual sqlite
+
+```bash
+sqlite3 ./prisma/data/library.db
+```
+
+Makes results readable
+
+```sql
+.mode column
+.headers on
+.width 5 20 30 20
+```
+
+```sql
+SELECT * FROM files;
+```
+
 ## Development Status
 
 ### Completed ✅
+
 - Database schema and migrations
 - Prisma setup with SQLite
 - Tool inventory CRUD operations
@@ -541,6 +592,7 @@ pnpm exec prisma generate      # Generate client
 - Basic UI with Tailwind CSS
 
 ### In Progress 🚧
+
 - User authentication and authorization
 - Checkout/checkin system
 - Patron management
@@ -548,6 +600,7 @@ pnpm exec prisma generate      # Generate client
 - Advanced permissions and roles
 
 ### Planned 📋
+
 - Email reminders for overdue items
 - Advanced reporting and analytics
 - Patron self-service portal
