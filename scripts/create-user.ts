@@ -2,6 +2,10 @@ import { PrismaClient } from "../src/generated/prisma/client.js";
 import * as bcrypt from 'bcrypt';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
+import { config } from 'dotenv';
+
+// Load environment variables from .env file
+config();
 
 const prisma = new PrismaClient();
 

@@ -1,4 +1,8 @@
-import { PrismaClient } from "../src/generated/prisma/client.js"
+import { PrismaClient } from "../src/generated/prisma/client.js";
+import { config } from 'dotenv';
+
+// Load environment variables from .env file
+config();
 
 const prisma = new PrismaClient();
 
