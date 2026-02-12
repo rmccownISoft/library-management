@@ -2,21 +2,29 @@
 	import { page } from '$app/state'
 	import '../app.css'
 
-	let { children } = $props()
+	let { children, data } = $props()
 </script>
 
 <div class="layout">
-	<nav>
-		<div class="nav-brand">
-			<a href="/">Lincoln Tool Library</a>
-		</div>
-		<div class="nav-links">
-			<a href="/" class:active={page.url.pathname === '/'}> Home </a>
-			<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
-			<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
-			<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
-		</div>
-	</nav>
+	{#if data?.user}
+		<nav>
+			<div class="nav-brand">
+				<a href="/">Lincoln Tool Library</a>
+			</div>
+			<div class="nav-links">
+				<a href="/" class:active={page.url.pathname === '/'}> Home </a>
+				<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
+				<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+				<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
+			</div>
+			<div class="nav-user">
+				<span class="user-name">{data.user.name}</span>
+				<form method="POST" action="/logout" style="display: inline;">
+					<button type="submit" class="logout-button">Logout</button>
+				</form>
+			</div>
+		</nav>
+	{/if}
 
 	<div class="content">
 		{@render children()}
@@ -70,6 +78,36 @@
 	.nav-links a.active {
 		background: rgba(255, 255, 255, 0.2);
 		color: white;
+	}
+
+	.nav-user {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.user-name {
+		font-weight: 600;
+	}
+
+	.user-role {
+		font-size: 0.875rem;
+		opacity: 0.9;
+	}
+
+	.logout-button {
+		background: rgba(255, 255, 255, 0.2);
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-weight: 500;
+		transition: background 0.2s;
+	}
+
+	.logout-button:hover {
+		background: rgba(255, 255, 255, 0.3);
 	}
 
 	.content {

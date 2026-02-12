@@ -1,8 +1,39 @@
+import type { PageServerLoad } from './$types';
 import prisma from '$lib/prisma';
 
-export async function load() {
-	const users = await prisma.user.findMany({});
+export const load: PageServerLoad = async ({ locals }) => {
+	// Public page - fetch tools and categories for everyone
+	const [tools, categories] = await Promise.all([
+		prisma.tool.findMany({
+			include: {
+				category: true
+			},
+			orderBy: {
+				name: 'asc'
+			}
+		}),
+		prisma.category.findMany({
+			include: {
+				children: {
+					include: {
+						_count: {
+							select: { tools: true }
+						}
+					}
+				},
+				_count: {
+					select: { tools: true }
+				}
+			},
+			orderBy: {
+				name: 'asc'
+			}
+		})
+	]);
+
 	return {
-		users
+		tools,
+		categories,
+		user: locals.user // Pass user data for conditional rendering
 	};
-}
+};
