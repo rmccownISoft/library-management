@@ -11,9 +11,10 @@
 			<a href="/">Lincoln Tool Library</a>
 		</div>
 		<div class="nav-links">
-			<a href="/" class:active={page.url.pathname.startsWith('/patrons')}> Home </a>
+			<a href="/" class:active={page.url.pathname === '/'}> Home </a>
 			<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
-			<a href="/tools" class:active={page.url.pathname.startsWith('tools')}> Tools </a>
+			<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+			<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
 		</div>
 	</nav>
 
