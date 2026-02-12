@@ -9,23 +9,28 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting production seed...');
 
-  // Clean up existing data (in reverse dependency order)
+  // Clean up existing data (disable FK constraints, delete all, re-enable)
   console.log('🧹 Cleaning existing data...');
+  
+  // Disable foreign key constraints temporarily
+  await prisma.$executeRawUnsafe('PRAGMA foreign_keys = OFF;');
+  
+  // Delete all data from all tables
   await prisma.checkout.deleteMany();
   await prisma.damageReport.deleteMany();
   await prisma.file.deleteMany();
   await prisma.tool.deleteMany();
-  
-  // Delete categories: children first, then parents (due to self-referential FK)
-  await prisma.category.deleteMany({ where: { parentId: { not: null } } });
-  await prisma.category.deleteMany({ where: { parentId: null } });
-  
+  await prisma.category.deleteMany();
   await prisma.patron.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.loginHistory.deleteMany();
   await prisma.overrideLog.deleteMany();
   await prisma.user.deleteMany();
   await prisma.systemSetting.deleteMany();
+  
+  // Re-enable foreign key constraints
+  await prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON;');
+  
   console.log('✅ Cleaned up existing data');
 
   // Create Parent Categories
