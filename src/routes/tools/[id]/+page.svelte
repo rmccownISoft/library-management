@@ -47,21 +47,23 @@
 				</span>
 			</div>
 			
-			<!-- Action Buttons (Admin Only - hide with permissions later) -->
-			<div class="flex gap-2">
-				<a 
-					href="/tools/{data.tool.id}/edit"
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-				>
-					Edit Tool
-				</a>
-				<button
-					onclick={() => showDeleteConfirm = true}
-					class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-				>
-					Delete
-				</button>
-			</div>
+			<!-- Action Buttons (Only show to authenticated users) -->
+			{#if data.user}
+				<div class="flex gap-2">
+					<a 
+						href="/tools/{data.tool.id}/edit"
+						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+					>
+						Edit Tool
+					</a>
+					<button
+						onclick={() => showDeleteConfirm = true}
+						class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+					>
+						Delete
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 

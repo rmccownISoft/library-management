@@ -88,10 +88,12 @@
                 {selectedCategoryId === null ? 'All Tools' : getCategoryName(selectedCategoryId)}
             </h1>
             
-            <!-- Add New Tool Button (Admin Only) -->
-            <Button variant="success" type="a" href="/tools/new">
-                + Add New Tool
-            </Button>
+            <!-- Add New Tool Button (Only for authenticated users) -->
+            {#if data.user}
+                <Button variant="success" type="a" href="/tools/new">
+                    + Add New Tool
+                </Button>
+            {/if}
         </div>
 
         <!-- Search Box -->
