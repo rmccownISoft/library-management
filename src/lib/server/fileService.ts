@@ -18,6 +18,19 @@ export interface FileUploadConfig {
 }
 
 /**
+ * Gets the base upload path from environment or uses defaults
+ */
+function getBaseUploadPath(): string {
+	// Check for environment variable first (recommended for production)
+	if (process.env.UPLOAD_BASE_PATH) {
+		return process.env.UPLOAD_BASE_PATH;
+	}
+	
+	// Fall back to old defaults (for backward compatibility)
+	return dev ? 'C:/Temp' : '/var/www/html/files';
+}
+
+/**
  * Image optimization settings
  * Used to resize and compress images before saving
  */
@@ -117,67 +130,106 @@ export async function writeFileAndPrismaCreate(
 	file: File,
 	config: FileUploadConfig
 ): Promise<FileWriteResult> {
-	// Determine base path based on environment
-	const basePath = config.basePath || (dev ? 'C:/Temp' : '/var/www/html/files');
-	
-	// Create subdirectory based on entity type
-	const subDir = config.entityType.toLowerCase();
-	const fullPath = join(basePath, subDir);
-	
-	// Ensure directory exists
-	mkdirSync(fullPath, { recursive: true });
-	
-	// Generate unique filename
-	const originalExtension = extname(file.name);
-	const arrayBuffer = await file.arrayBuffer();
-	let buffer: Buffer = Buffer.from(new Uint8Array(arrayBuffer));
-	let fileExtension = originalExtension;
-	let actualFileType = file.type || 'application/octet-stream';
-	
-	// Optimize image if it's an image file
-	if (isImage(file.type)) {
+	try {
+		// Determine base path based on environment
+		const basePath = config.basePath || getBaseUploadPath();
+		
+		// Create subdirectory based on entity type
+		const subDir = config.entityType.toLowerCase();
+		const fullPath = join(basePath, subDir);
+		
+		// Ensure directory exists with proper error handling
 		try {
-			buffer = await optimizeImage(buffer);
-			fileExtension = '.jpg'; // Always save optimized images as JPEG
-			actualFileType = 'image/jpeg';
+			mkdirSync(fullPath, { recursive: true });
 		} catch (error) {
-			console.warn('Failed to optimize image, saving original:', error);
-			// Continue with original buffer and extension
+			console.error(`Failed to create directory ${fullPath}:`, error);
+			throw new Error(`Unable to create upload directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
-	}
-	
-	const uniqueFileName = randomUUID() + fileExtension;
-	const filePath = join(fullPath, uniqueFileName);
-	
-	// Write file to filesystem
-	writeFileSync(filePath, buffer);
-	
-	// Create File record in database using Prisma
-	console.log('file create: ', file)
-	console.log('file create config: ', config)
-	
-	// Determine which ID field to use based on entity type
-	const idField = getEntityIdField(config.entityType);
-	
-	const fileRecord = await prisma.file.create({
-		data: {
-			entityType: config.entityType,
-			[idField]: config.entityId,
-			filePath: filePath,
-			fileName: file.name, // Original filename
-			fileType: actualFileType, // Use actual type (may be converted to jpeg)
-			label: config.label || null,
+		
+		// Generate unique filename
+		const originalExtension = extname(file.name);
+		const arrayBuffer = await file.arrayBuffer();
+		let buffer: Buffer = Buffer.from(new Uint8Array(arrayBuffer));
+		let fileExtension = originalExtension;
+		let actualFileType = file.type || 'application/octet-stream';
+		
+		// Optimize image if it's an image file
+		if (isImage(file.type)) {
+			try {
+				buffer = await optimizeImage(buffer);
+				fileExtension = '.jpg'; // Always save optimized images as JPEG
+				actualFileType = 'image/jpeg';
+			} catch (error) {
+				console.warn('Failed to optimize image, saving original:', error);
+				// Continue with original buffer and extension
+			}
+		}
+		
+		const uniqueFileName = randomUUID() + fileExtension;
+		const filePath = join(fullPath, uniqueFileName);
+		
+		// Write file to filesystem with error handling
+		try {
+			writeFileSync(filePath, buffer);
+			console.log(`Successfully wrote file to: ${filePath}`);
+		} catch (error) {
+			console.error(`Failed to write file to ${filePath}:`, error);
+			throw new Error(`Unable to save file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+		
+		// Create File record in database using Prisma
+		console.log('Creating file record for:', file.name);
+		console.log('File config:', { 
+			entityType: config.entityType, 
+			entityId: config.entityId,
 			uploadedBy: config.uploadedBy
+		});
+		
+		// Determine which ID field to use based on entity type
+		const idField = getEntityIdField(config.entityType);
+		
+		try {
+			const fileRecord = await prisma.file.create({
+				data: {
+					entityType: config.entityType,
+					[idField]: config.entityId,
+					filePath: filePath,
+					fileName: file.name, // Original filename
+					fileType: actualFileType, // Use actual type (may be converted to jpeg)
+					label: config.label || null,
+					uploadedBy: config.uploadedBy
+				}
+			});
+			
+			console.log(`Successfully created file record with ID: ${fileRecord.id}`);
+			
+			return {
+				id: fileRecord.id,
+				fileName: fileRecord.fileName,
+				filePath: fileRecord.filePath,
+				fileType: fileRecord.fileType,
+				label: fileRecord.label || undefined
+			};
+		} catch (error) {
+			console.error('Failed to create file record in database:', error);
+			// Clean up the file we just wrote since DB insert failed
+			try {
+				const fs = await import('fs');
+				fs.unlinkSync(filePath);
+				console.log(`Cleaned up orphaned file: ${filePath}`);
+			} catch (cleanupError) {
+				console.error(`Failed to clean up orphaned file ${filePath}:`, cleanupError);
+			}
+			throw new Error(`Database error while saving file: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
-	});
-	
-	return {
-		id: fileRecord.id,
-		fileName: fileRecord.fileName,
-		filePath: fileRecord.filePath,
-		fileType: fileRecord.fileType,
-		label: fileRecord.label || undefined
-	};
+	} catch (error) {
+		// Re-throw with more context if it's not already our error
+		if (error instanceof Error && error.message.includes('Unable to')) {
+			throw error;
+		}
+		console.error('Unexpected error in writeFileAndPrismaCreate:', error);
+		throw new Error(`Failed to process file upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
+	}
 }
 
 /**
@@ -203,11 +255,13 @@ export async function writeMultipleFilesAndPrismaCreate(
 	files: File[],
 	config: FileUploadConfig
 ): Promise<BatchFileWriteResult> {
+	console.log(`Starting upload of ${files.length} file(s)`);
+	
 	// Process all files in parallel
 	const results = await Promise.allSettled(
 		files.map(file => writeFileAndPrismaCreate(file, config))
 	);
-	console.log('results: ', results)
+	
 	const successful: FileWriteResult[] = [];
 	const failed: Array<{ file: File; error: Error }> = [];
 	
@@ -215,12 +269,16 @@ export async function writeMultipleFilesAndPrismaCreate(
 		if (result.status === 'fulfilled') {
 			successful.push(result.value);
 		} else {
+			const error = result.reason instanceof Error ? result.reason : new Error(String(result.reason));
+			console.error(`Failed to upload file ${files[index].name}:`, error);
 			failed.push({
 				file: files[index],
-				error: result.reason instanceof Error ? result.reason : new Error(String(result.reason))
+				error
 			});
 		}
 	});
+	
+	console.log(`Upload complete: ${successful.length} succeeded, ${failed.length} failed`);
 	
 	return { successful, failed };
 }

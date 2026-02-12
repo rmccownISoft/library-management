@@ -94,12 +94,21 @@ export const actions: Actions = {
 				entityType: EntityType.TOOL,
 				entityId: tool.id,
 				uploadedBy: 1, // TODO: Replace with actual user ID when authentication is implemented
-				label: 'Tool Photo' // not sure what the intent of this field was
+				label: 'Tool Photo'
 			})
-			if (fileResults.failed.length < 0) {
-				console.error(`Failed to save ${fileResults.failed.length} files for tool ${tool.id}`) // TODO: use proper error here?
+			
+			// Check for failed uploads and log them (non-blocking)
+			if (fileResults.failed.length > 0) {
+				console.error(`Failed to save ${fileResults.failed.length} file(s) for tool ${tool.id}`)
+				fileResults.failed.forEach(f => {
+					console.error(`  - ${f.file.name}: ${f.error.message}`)
+				})
 			}
-			console.log('page server file results: ', fileResults)
+			
+			// Log success summary
+			if (fileResults.successful.length > 0) {
+				console.log(`Successfully saved ${fileResults.successful.length} file(s) for tool ${tool.id}`)
+			}
 		}
 
 		
