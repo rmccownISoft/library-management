@@ -9,6 +9,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting production seed...');
 
+  // Clean up existing data (in reverse dependency order)
+  console.log('🧹 Cleaning existing data...');
+  await prisma.checkout.deleteMany();
+  await prisma.damageReport.deleteMany();
+  await prisma.file.deleteMany();
+  await prisma.tool.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.patron.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.loginHistory.deleteMany();
+  await prisma.overrideLog.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.systemSetting.deleteMany();
+  console.log('✅ Cleaned up existing data');
+
   // Create Parent Categories
   const electricalCategory = await prisma.category.create({
     data: {
