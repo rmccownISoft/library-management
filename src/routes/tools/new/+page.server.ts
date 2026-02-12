@@ -33,7 +33,12 @@ export const load: PageServerLoad = async () => {
 
 // Server form action for saving tool
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
+		// Check authentication
+		if (!locals.user) {
+			return fail(401, { error: 'You must be logged in to create tools' })
+		}
+		
 		const formData = await request.formData()
 		console.log('form data: ', formData)
 		// Extract files from form data and filter out empty files
@@ -93,7 +98,7 @@ export const actions: Actions = {
 			const fileResults = await writeMultipleFilesAndPrismaCreate(files, {
 				entityType: EntityType.TOOL,
 				entityId: tool.id,
-				uploadedBy: 1, // TODO: Replace with actual user ID when authentication is implemented
+				uploadedBy: locals.user.id,
 				label: 'Tool Photo'
 			})
 			

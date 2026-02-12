@@ -53,7 +53,12 @@ export const load: PageServerLoad = async({ params }) => {
 }
 
 export const actions: Actions = {
-    default: async ({ request, params }) => {
+    default: async ({ request, params, locals }) => {
+        // Check authentication
+        if (!locals.user) {
+            return fail(401, { error: 'You must be logged in to edit tools' })
+        }
+        
         const toolId = parseInt(params.id)
         
         if (isNaN(toolId)) {
@@ -119,7 +124,7 @@ export const actions: Actions = {
             await writeMultipleFilesAndPrismaCreate(files, {
                 entityType: EntityType.TOOL,
                 entityId: toolId,
-                uploadedBy: 1, // TODO: Replace with actual user ID when authentication is implemented
+                uploadedBy: locals.user.id,
                 label: 'Tool Photo'
             })
         }
