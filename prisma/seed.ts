@@ -27,6 +27,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
+      userName: 'admin',
       email: 'admin@toollibrary.org',
       passwordHash: adminPassword,
       name: 'Admin User',
@@ -42,6 +43,7 @@ async function main() {
 
   const volunteer1 = await prisma.user.create({
     data: {
+      userName: 'volunteer',
       email: 'john@toollibrary.org',
       passwordHash: volunteerPassword,
       name: 'John Volunteer',
@@ -58,6 +60,7 @@ async function main() {
 
   const volunteer2 = await prisma.user.create({
     data: {
+      userName: 'jane',
       email: 'jane@toollibrary.org',
       passwordHash: volunteerPassword,
       name: 'Jane Volunteer',
@@ -85,6 +88,7 @@ async function main() {
       mailingCity: 'Springfield',
       mailingState: 'IL',
       mailingZipcode: '62704',
+      createdBy: admin.id,
     },
   });
 
@@ -98,6 +102,7 @@ async function main() {
       mailingCity: 'Springfield',
       mailingState: 'IL',
       mailingZipcode: '62705',
+      createdBy: admin.id,
     },
   });
 
@@ -110,6 +115,7 @@ async function main() {
       mailingCity: 'Springfield',
       mailingState: 'IL',
       mailingZipcode: '62706',
+      createdBy: volunteer1.id,
     },
   });
 
@@ -505,9 +511,9 @@ async function main() {
 
   console.log('🎉 Seed completed successfully!');
   console.log('\nTest Credentials:');
-  console.log('Admin: admin@toollibrary.org / admin123');
-  console.log('Volunteer: john@toollibrary.org / volunteer123');
-  console.log('Volunteer: jane@toollibrary.org / volunteer123');
+  console.log('Username: admin / Password: admin123');
+  console.log('Username: volunteer / Password: volunteer123');
+  console.log('Username: jane / Password: volunteer123');
 }
 
 main()
