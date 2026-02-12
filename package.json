@@ -12,7 +12,15 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate deploy",
+		"db:setup:dev": "prisma generate && prisma migrate deploy && npm run seed",
+		"db:setup:production": "prisma generate && prisma migrate deploy && npm run seed:production",
+		"db:reset": "prisma migrate reset --force",
+		"seed": "tsx prisma/seed.ts",
+		"seed:production": "tsx prisma/seed.production.ts",
+		"create-user": "tsx scripts/create-user.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
