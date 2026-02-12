@@ -11,6 +11,9 @@ importers:
       '@prisma/extension-accelerate':
         specifier: ^2.0.2
         version: 2.0.2(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -48,9 +51,6 @@ importers:
       '@types/node':
         specifier: ^22
         version: 22.19.0
-      bcrypt:
-        specifier: ^6.0.0
-        version: 6.0.0
       eslint:
         specifier: ^9.38.0
         version: 9.39.1(jiti@2.6.1)
