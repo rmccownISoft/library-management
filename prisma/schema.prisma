@@ -90,7 +90,7 @@ model Patron {
 
 model Category {
   id        Int      @id @default(autoincrement())
-  name      String   @unique
+  name      String
   parentId  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,6 +100,8 @@ model Category {
   children   Category[] @relation("CategoryHierarchy")
   tools      Tool[]
 
+  // Unique constraint: same name can exist under different parents
+  @@unique([name, parentId])
   @@map("categories")
 }
 

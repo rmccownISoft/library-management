@@ -63,14 +63,19 @@ export const actions: Actions = {
 			})
 		}
 
-		// Check for duplicate name
-		const existing = await prisma.category.findUnique({
-			where: { name: name.trim() }
+		// Check for duplicate name under the same parent
+		const existing = await prisma.category.findFirst({
+			where: { 
+				name: name.trim(),
+				parentId: parentId
+			}
 		})
 
 		if (existing) {
 			return fail(400, {
-				error: 'A category with this name already exists',
+				error: parentId 
+					? 'A category with this name already exists under the selected parent'
+					: 'A top-level category with this name already exists',
 				field: 'name'
 			})
 		}
@@ -111,14 +116,20 @@ export const actions: Actions = {
 			})
 		}
 
-		// Check for duplicate name (excluding self)
-		const existing = await prisma.category.findUnique({
-			where: { name: name.trim() }
+		// Check for duplicate name under the same parent (excluding self)
+		const existing = await prisma.category.findFirst({
+			where: { 
+				name: name.trim(),
+				parentId: parentId,
+				id: { not: id }
+			}
 		})
 
-		if (existing && existing.id !== id) {
+		if (existing) {
 			return fail(400, {
-				error: 'A category with this name already exists',
+				error: parentId 
+					? 'A category with this name already exists under the selected parent'
+					: 'A top-level category with this name already exists',
 				field: 'name',
 				editingId: id
 			})
@@ -174,7 +185,7 @@ async function isDescendantOf(potentialAncestorId: number, categoryId: number): 
 			return true // Found a circular reference
 		}
 
-		const category = await prisma.category.findUnique({
+		const category: { parentId: number | null } | null = await prisma.category.findUnique({
 			where: { id: currentId },
 			select: { parentId: true }
 		})
