@@ -43,7 +43,7 @@
 	}
 
 	nav {
-		background: #2196f3;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		color: white;
 		padding: 1rem 2rem;
 		display: flex;
