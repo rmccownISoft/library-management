@@ -3,6 +3,8 @@
 	import type { PageData, ActionData } from './$types';
 	import type { CategoryModel } from '$generated/prisma/models';
 	import Button from '$lib/components/Button.svelte';
+	import Toast from '$lib/components/Toast.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 
 	type CategoryWithChildren = CategoryModel & {
 		children?: CategoryWithChildren[];
@@ -82,14 +84,9 @@
 		editParentId = '';
 	}
 
-	// Clear create form on success
-	$effect(() => {
-		if (form?.success && !form?.editingId) {
-			createName = '';
-			createParentId = '';
-		}
-	});
 </script>
+
+<Toast />
 
 <div class="p-8">
 	<!-- Header -->
@@ -98,18 +95,6 @@
 		<p class="text-gray-600 mt-2">Manage tool categories and subcategories</p>
 	</div>
 
-	<!-- Success/Error Messages -->
-	{#if form?.success}
-		<div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-			✓ {form.message}
-		</div>
-	{/if}
-
-	{#if form?.error && !form?.editingId}
-		<div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-			✗ {form.error}
-		</div>
-	{/if}
 
 	<!-- Category List -->
 	<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
@@ -144,11 +129,17 @@
 											action="?/update"
 											use:enhance={() => {
 												isUpdating = true;
-												return async ({ update }) => {
+												return async ({ result, update }) => {
 													await update();
 													isUpdating = false;
-													if (form?.success) {
+													
+													if (result.type === 'success' && result.data?.success) {
+														const message = typeof result.data.message === 'string' ? result.data.message : 'Category updated successfully';
+														toastStore.success(message);
 														cancelEdit();
+													} else if (result.type === 'failure' && result.data?.error) {
+														const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+														toastStore.error(error);
 													}
 												};
 											}}
@@ -270,11 +261,17 @@
 								action="?/update"
 								use:enhance={() => {
 									isUpdating = true;
-									return async ({ update }) => {
+									return async ({ result, update }) => {
 										await update();
 										isUpdating = false;
-										if (form?.success) {
+										
+										if (result.type === 'success' && result.data?.success) {
+											const message = typeof result.data.message === 'string' ? result.data.message : 'Category updated successfully';
+											toastStore.success(message);
 											cancelEdit();
+										} else if (result.type === 'failure' && result.data?.error) {
+											const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+											toastStore.error(error);
 										}
 									};
 								}}
@@ -398,15 +395,20 @@
 					return async ({ result, update }) => {
 						await update();
 						isCreating = false;
+						
+						if (result.type === 'success' && result.data?.success) {
+							const message = typeof result.data.message === 'string' ? result.data.message : 'Category created successfully';
+							toastStore.success(message);
+							// Clear form on success
+							createName = '';
+							createParentId = '';
+						} else if (result.type === 'failure' && result.data?.error) {
+							const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+							toastStore.error(error);
+						}
 					};
 				}}
 			>
-				{#if form?.error && !form?.editingId}
-					<div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-						✗ {form.error}
-					</div>
-				{/if}
-
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label for="create-name" class="block text-sm font-medium text-gray-700 mb-1">
