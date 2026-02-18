@@ -2,14 +2,24 @@ import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	// Redirect to login if not authenticated
+	if (!locals.user) {
+		throw redirect(303, '/login')
+	}
+	
 	return {
 		patron: null  // Indicates create mode
 	}
 }
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
+		// Check if user is logged in (redundant check since load function redirects, but good for safety)
+		if (!locals.user) {
+			throw redirect(303, '/login')
+		}
+		
 		const formData = await request.formData()
 		
 		// Extract and validate form data
@@ -105,7 +115,7 @@ export const actions: Actions = {
 				mailingCity: mailingCity.trim(),
 				mailingState: mailingState.trim(),
 				mailingZipcode: mailingZipcode.trim(),
-				createdBy: 1 // TODO: Replace with actual user ID when authentication is implemented
+				createdBy: locals.user.id
 			}
 		})
 		

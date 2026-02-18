@@ -1,6 +1,13 @@
 import prisma from '$lib/prisma'
+import { redirect } from '@sveltejs/kit'
+import type { PageServerLoad } from './$types'
 
-export const load = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+    // Redirect to login if not authenticated
+    if (!locals.user) {
+        throw redirect(303, '/login')
+    }
+    
     try {
         // Get tools with availability counts and categories
         const tools = await prisma.tool.findMany({
