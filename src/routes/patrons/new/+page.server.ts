@@ -2,7 +2,12 @@ import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	// Redirect to login if not authenticated
+	if (!locals.user) {
+		throw redirect(303, '/login')
+	}
+	
 	return {
 		patron: null  // Indicates create mode
 	}
@@ -10,12 +15,9 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		// Check if user is logged in
+		// Check if user is logged in (redundant check since load function redirects, but good for safety)
 		if (!locals.user) {
-			return fail(401, {
-				errors: { auth: 'You must be logged in to create a patron' },
-				values: {}
-			})
+			throw redirect(303, '/login')
 		}
 		
 		const formData = await request.formData()

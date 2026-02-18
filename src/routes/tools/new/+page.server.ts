@@ -6,7 +6,12 @@ import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
 import { EntityType } from '$generated/prisma/enums'
 
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	// Redirect to login if not authenticated
+	if (!locals.user) {
+		throw redirect(303, '/login')
+	}
+	
 	const categories = await prisma.category.findMany({
 		include: {
 			children: {
@@ -34,9 +39,9 @@ export const load: PageServerLoad = async () => {
 // Server form action for saving tool
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		// Check authentication
+		// Check authentication (redundant check since load function redirects, but good for safety)
 		if (!locals.user) {
-			return fail(401, { error: 'You must be logged in to create tools' })
+			throw redirect(303, '/login')
 		}
 		
 		const formData = await request.formData()
