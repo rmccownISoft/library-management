@@ -117,7 +117,7 @@
 						<img 
 							src="/api/files/{file.id}" 
 							alt={file.fileName}
-							class="w-full h-48 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity cursor-pointer"
+							class="w-full h-48 object-contain rounded-lg border border-gray-200 hover:opacity-90 transition-opacity cursor-pointer"
 						/>
 					</button>
 				{/each}
