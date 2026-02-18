@@ -6,6 +6,7 @@
 
     // Selected category state (null means "All Tools")
     let selectedCategoryId = $state<number | null>(null)
+    let selectedImage = $state<{ id: string; fileName: string } | null>(null)
 
     // Search query state for input field
     let searchQuery = $state(data.searchQuery)
@@ -144,8 +145,25 @@
                     <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6 md:grid-cols-1">
                         {#each tools as tool (tool.id)}
                             <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                                <h3 class="text-xl font-semibold mb-2 text-gray-900">{tool.name}</h3>
-                                <p class="text-gray-600 mb-4 text-sm line-clamp-2">{tool.description}</p>
+                                <div class="flex gap-4 mb-4">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-xl font-semibold mb-2 text-gray-900">{tool.name}</h3>
+                                        <p class="text-gray-600 text-sm line-clamp-2">{tool.description}</p>
+                                    </div>
+                                    {#if tool.files && tool.files.length > 0}
+                                        <button
+                                            type="button"
+                                            onclick={() => selectedImage = tool.files[0]}
+                                            class="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+                                        >
+                                            <img 
+                                                src="/api/files/{tool.files[0].id}" 
+                                                alt={tool.name}
+                                                class="w-24 h-24 object-contain rounded-lg border border-gray-200 flex-shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
+                                            />
+                                        </button>
+                                    {/if}
+                                </div>
                                 <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                                     <div class="flex items-center gap-3">
                                         <span class="text-gray-700 font-medium">Qty: {tool.quantity}</span>
@@ -172,6 +190,29 @@
         {/if}
     </main>
 </div>
+
+<!-- Image Lightbox Modal -->
+{#if selectedImage}
+    <div 
+        class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+        onclick={() => selectedImage = null}
+    >
+        <button
+            type="button"
+            onclick={() => selectedImage = null}
+            class="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl font-light leading-none"
+            aria-label="Close"
+        >
+            &times;
+        </button>
+        <img 
+            src="/api/files/{selectedImage.id}" 
+            alt={selectedImage.fileName}
+            class="max-w-full max-h-full object-contain"
+            onclick={(e) => e.stopPropagation()}
+        />
+    </div>
+{/if}
 
 {#snippet categoryNode(category: typeof data.categories[0], level: number)}
     <div style="padding-left: {level * 1.25}rem">
