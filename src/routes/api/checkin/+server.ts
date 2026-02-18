@@ -1,8 +1,15 @@
-import { json } from '@sveltejs/kit'
+import { json, type RequestEvent } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const POST = async ({ request }: { request: Request }) => {
+export const POST = async ({ request, locals }: RequestEvent) => {
 	try {
+		// Check if user is logged in
+		if (!locals.user) {
+			return json({ error: 'You must be logged in to perform check-ins' }, { status: 401 })
+		}
+
+		const userId = locals.user.id
+
 		const { checkoutId } = await request.json()
 
 		// Validate input
@@ -38,7 +45,7 @@ export const POST = async ({ request }: { request: Request }) => {
 			where: { id: checkoutId },
 			data: {
 				checkinDate: now,
-				checkinVolunteerId: 1, // Default volunteer ID for now
+				checkinVolunteerId: userId,
 				status: 'RETURNED',
 				wasOverdue: isOverdue || checkout.wasOverdue
 			}

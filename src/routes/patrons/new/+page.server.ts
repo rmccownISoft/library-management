@@ -9,7 +9,15 @@ export const load: PageServerLoad = async () => {
 }
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
+		// Check if user is logged in
+		if (!locals.user) {
+			return fail(401, {
+				errors: { auth: 'You must be logged in to create a patron' },
+				values: {}
+			})
+		}
+		
 		const formData = await request.formData()
 		
 		// Extract and validate form data
@@ -105,7 +113,7 @@ export const actions: Actions = {
 				mailingCity: mailingCity.trim(),
 				mailingState: mailingState.trim(),
 				mailingZipcode: mailingZipcode.trim(),
-				createdBy: 1 // TODO: Replace with actual user ID when authentication is implemented
+				createdBy: locals.user.id
 			}
 		})
 		

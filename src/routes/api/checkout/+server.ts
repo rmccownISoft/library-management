@@ -1,8 +1,15 @@
-import { json } from '@sveltejs/kit'
+import { json, type RequestEvent } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const POST = async ({ request }: { request: Request }) => {
+export const POST = async ({ request, locals }: RequestEvent) => {
     try {
+        // Check if user is logged in
+        if (!locals.user) {
+            return json({ error: 'You must be logged in to perform checkouts' }, { status: 401 })
+        }
+
+        const userId = locals.user.id
+
         const { patronId, toolIds, returnDate } = await request.json()
 
         // Validate input
@@ -54,7 +61,7 @@ export const POST = async ({ request }: { request: Request }) => {
                     data: {
                         toolId,
                         patronId,
-                        volunteerId: 1, // Default volunteer ID for now
+                        volunteerId: userId,
                         dueDate: new Date(returnDate),
                         checkoutPeriod: Math.ceil(
                             (new Date(returnDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
