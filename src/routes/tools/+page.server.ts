@@ -10,7 +10,13 @@ export const load: PageServerLoad = async ({ url }) => {
 				name: { contains: searchQuery }
 			} : undefined,
 			include: {
-				category: true
+				category: true,
+				files: {
+					take: 1,
+					orderBy: {
+						id: 'asc'
+					}
+				}
 			},
 			orderBy: {
 				name: 'asc'

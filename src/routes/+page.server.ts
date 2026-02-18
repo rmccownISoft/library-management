@@ -6,7 +6,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [tools, categories] = await Promise.all([
 		prisma.tool.findMany({
 			include: {
-				category: true
+				category: true,
+				files: {
+					take: 1,
+					orderBy: {
+						id: 'asc'
+					}
+				}
 			},
 			orderBy: {
 				name: 'asc'
