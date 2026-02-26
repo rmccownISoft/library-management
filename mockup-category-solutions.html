@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Dropdown Solutions Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .demo-section { 
+            max-width: 500px; 
+            margin: 0 auto;
+        }
+        
+        /* Custom styles for option 2 */
+        .category-item { cursor: pointer; }
+        .category-item:hover { background-color: #f3f4f6; }
+        .subcategory-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .subcategory-list.expanded {
+            max-height: 500px;
+        }
+        .chevron {
+            transition: transform 0.3s ease;
+        }
+        .chevron.rotated {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Category Dropdown Solutions</h1>
+        <p class="text-gray-600 text-center mb-8">Compare two mobile-friendly approaches</p>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Option 1: Breadcrumb Style -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Option 1: Breadcrumb Style</h2>
+                    <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">SIMPLEST</span>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-blue-900"><strong>✅ Pros:</strong></p>
+                    <ul class="text-sm text-blue-800 list-disc ml-5 mt-1">
+                        <li>Works perfectly with native Android picker</li>
+                        <li>Easy to scan hierarchy at a glance</li>
+                        <li>Minimal code changes</li>
+                        <li>No custom components needed</li>
+                    </ul>
+                    <p class="text-sm text-blue-900 mt-3"><strong>⚠️ Cons:</strong></p>
+                    <ul class="text-sm text-blue-800 list-disc ml-5 mt-1">
+                        <li>Long breadcrumbs may wrap on very small screens</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Category <span class="text-red-600">*</span>
+                    </label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select a category</option>
+                        <option value="1">Hand Tools</option>
+                        <option value="2">Hand Tools > Screwdrivers</option>
+                        <option value="3">Hand Tools > Screwdrivers > Flathead</option>
+                        <option value="4">Hand Tools > Screwdrivers > Phillips</option>
+                        <option value="5">Hand Tools > Wrenches</option>
+                        <option value="6">Hand Tools > Hammers</option>
+                        <option value="7">Power Tools</option>
+                        <option value="8">Power Tools > Drills</option>
+                        <option value="9">Power Tools > Drills > Cordless</option>
+                        <option value="10">Power Tools > Drills > Corded</option>
+                        <option value="11">Power Tools > Saws</option>
+                        <option value="12">Power Tools > Sanders</option>
+                        <option value="13">Garden Tools</option>
+                        <option value="14">Garden Tools > Pruning</option>
+                        <option value="15">Garden Tools > Digging</option>
+                        <option value="16">Safety Equipment</option>
+                        <option value="17">Safety Equipment > Eye Protection</option>
+                        <option value="18">Safety Equipment > Hearing Protection</option>
+                    </select>
+                    
+                    <div class="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs text-gray-600 font-semibold mb-2">📱 On Android, this will display as:</p>
+                        <div class="space-y-1 text-sm">
+                            <div class="p-2 bg-white rounded">Hand Tools</div>
+                            <div class="p-2 bg-white rounded">Hand Tools > Screwdrivers</div>
+                            <div class="p-2 bg-white rounded">Hand Tools > Screwdrivers > Flathead</div>
+                            <div class="p-2 bg-white rounded">Power Tools > Drills > Cordless</div>
+                            <div class="text-gray-500 text-xs pt-2">...all clearly readable in native picker!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Option 2: Accordion/Tree View -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Option 2: Accordion Tree</h2>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">MORE CODE</span>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-blue-900"><strong>✅ Pros:</strong></p>
+                    <ul class="text-sm text-blue-800 list-disc ml-5 mt-1">
+                        <li>Visual hierarchy is very clear</li>
+                        <li>Only show relevant subcategories</li>
+                        <li>Expandable/collapsible for clean UI</li>
+                        <li>Great for touch interfaces</li>
+                    </ul>
+                    <p class="text-sm text-blue-900 mt-3"><strong>⚠️ Cons:</strong></p>
+                    <ul class="text-sm text-blue-800 list-disc ml-5 mt-1">
+                        <li>Requires new component</li>
+                        <li>More clicks to find nested items</li>
+                        <li>Takes more vertical space</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Category <span class="text-red-600">*</span>
+                    </label>
+                    
+                    <div class="border border-gray-300 rounded-lg overflow-hidden">
+                        <div class="max-h-64 overflow-y-auto">
+                            <!-- Hand Tools -->
+                            <div>
+                                <div class="category-item flex items-center justify-between p-3 border-b border-gray-200 bg-white" 
+                                     onclick="toggleCategory('handtools')">
+                                    <div class="flex items-center gap-2">
+                                        <svg id="chevron-handtools" class="chevron w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                        <span class="font-medium">Hand Tools</span>
+                                    </div>
+                                    <input type="radio" name="category" value="1" class="w-4 h-4">
+                                </div>
+                                <div id="sub-handtools" class="subcategory-list bg-gray-50">
+                                    <!-- Screwdrivers -->
+                                    <div>
+                                        <div class="category-item flex items-center justify-between p-3 pl-8 border-b border-gray-100" 
+                                             onclick="toggleCategory('screwdrivers')">
+                                            <div class="flex items-center gap-2">
+                                                <svg id="chevron-screwdrivers" class="chevron w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                                <span>Screwdrivers</span>
+                                            </div>
+                                            <input type="radio" name="category" value="2" class="w-4 h-4">
+                                        </div>
+                                        <div id="sub-screwdrivers" class="subcategory-list bg-gray-100">
+                                            <div class="flex items-center justify-between p-3 pl-16 border-b border-gray-100 hover:bg-gray-200">
+                                                <span class="text-sm">Flathead</span>
+                                                <input type="radio" name="category" value="3" class="w-4 h-4">
+                                            </div>
+                                            <div class="flex items-center justify-between p-3 pl-16 border-b border-gray-100 hover:bg-gray-200">
+                                                <span class="text-sm">Phillips</span>
+                                                <input type="radio" name="category" value="4" class="w-4 h-4">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Wrenches -->
+                                    <div class="flex items-center justify-between p-3 pl-8 border-b border-gray-100 hover:bg-gray-200">
+                                        <span>Wrenches</span>
+                                        <input type="radio" name="category" value="5" class="w-4 h-4">
+                                    </div>
+                                    <!-- Hammers -->
+                                    <div class="flex items-center justify-between p-3 pl-8 border-b border-gray-100 hover:bg-gray-200">
+                                        <span>Hammers</span>
+                                        <input type="radio" name="category" value="6" class="w-4 h-4">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Power Tools -->
+                            <div>
+                                <div class="category-item flex items-center justify-between p-3 border-b border-gray-200 bg-white" 
+                                     onclick="toggleCategory('powertools')">
+                                    <div class="flex items-center gap-2">
+                                        <svg id="chevron-powertools" class="chevron w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                        <span class="font-medium">Power Tools</span>
+                                    </div>
+                                    <input type="radio" name="category" value="7" class="w-4 h-4">
+                                </div>
+                                <div id="sub-powertools" class="subcategory-list bg-gray-50">
+                                    <div class="flex items-center justify-between p-3 pl-8 border-b border-gray-100 hover:bg-gray-200">
+                                        <span>Drills</span>
+                                        <input type="radio" name="category" value="8" class="w-4 h-4">
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 pl-8 border-b border-gray-100 hover:bg-gray-200">
+                                        <span>Saws</span>
+                                        <input type="radio" name="category" value="9" class="w-4 h-4">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Garden Tools -->
+                            <div class="flex items-center justify-between p-3 border-b border-gray-200 bg-white hover:bg-gray-50">
+                                <span class="font-medium">Garden Tools</span>
+                                <input type="radio" name="category" value="10" class="w-4 h-4">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs text-gray-600 font-semibold mb-2">👆 Try it:</p>
+                        <p class="text-xs text-gray-600">Click categories with arrows to expand/collapse. Radio buttons select the category.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendation -->
+        <div class="mt-8 bg-green-50 border-2 border-green-500 rounded-lg p-6 max-w-4xl mx-auto">
+            <h3 class="text-xl font-bold text-green-900 mb-3">💡 Recommendation</h3>
+            <p class="text-green-900 mb-3">
+                <strong>Start with Option 1 (Breadcrumb Style)</strong> because:
+            </p>
+            <ul class="text-green-800 list-disc ml-5 space-y-1 mb-4">
+                <li>Can be implemented in <strong>5 minutes</strong> with minimal code changes</li>
+                <li>Works immediately on all devices including Android</li>
+                <li>Clear hierarchy without confusing unicode characters</li>
+                <li>Native accessibility built-in</li>
+            </ul>
+            <p class="text-green-900">
+                If you later find you need search or better interaction for very deep category trees (4+ levels), 
+                you can upgrade to Option 2 or add a search feature. But for most use cases, breadcrumbs solve the problem perfectly!
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function toggleCategory(id) {
+            const subList = document.getElementById('sub-' + id);
+            const chevron = document.getElementById('chevron-' + id);
+            
+            if (subList) {
+                subList.classList.toggle('expanded');
+                if (chevron) {
+                    chevron.classList.toggle('rotated');
+                }
+                
+                // Prevent radio button from being selected when clicking to expand
+                event.stopPropagation();
+                if (event.target.type !== 'radio') {
+                    event.preventDefault();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

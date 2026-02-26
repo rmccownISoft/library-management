@@ -25,28 +25,34 @@
 	let isCreating = $state(false);
 
 	// State for editing
-	let editingId = $state<number | null>(form?.editingId || null);
+	let editingId = $state<number | null>(
+		(form && 'editingId' in form && typeof form.editingId === 'number') ? form.editingId : null
+	);
 	let editName = $state('');
 	let editParentId = $state<string>('');
 	let isUpdating = $state(false);
 
-	// Flatten categories into a hierarchical list with indentation
+	// Flatten categories into a hierarchical list with breadcrumb paths
 	interface FlatCategory {
 		id: number;
 		name: string;
+		displayName: string;  // Full breadcrumb path like "Hand Tools > Screwdrivers"
 		level: number;
 		toolCount: number;
 		parentName: string | null;
 		category: CategoryWithChildren;
 	}
 
-	function flattenCategories(cats: CategoryWithChildren[], level = 0): FlatCategory[] {
+	function flattenCategories(cats: CategoryWithChildren[], level = 0, parentPath = ''): FlatCategory[] {
 		const result: FlatCategory[] = [];
 
 		for (const cat of cats) {
+			const currentPath = parentPath ? `${parentPath} > ${cat.name}` : cat.name;
+			
 			result.push({
 				id: cat.id,
 				name: cat.name,
+				displayName: currentPath,
 				level,
 				toolCount: cat._count.tools,
 				parentName: cat.parent?.name || null,
@@ -54,7 +60,7 @@
 			});
 
 			if (cat.children && cat.children.length > 0) {
-				result.push(...flattenCategories(cat.children, level + 1));
+				result.push(...flattenCategories(cat.children, level + 1, currentPath));
 			}
 		}
 
@@ -146,7 +152,7 @@
 										>
 											<input type="hidden" name="id" value={category.id} />
 
-											{#if form?.error && form?.editingId === category.id}
+											{#if form?.error && 'editingId' in form && form?.editingId === category.id}
 												<div
 													class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
 												>
@@ -172,29 +178,27 @@
 													/>
 												</div>
 
-												<div>
-													<label
-														for="edit-parent-{category.id}"
-														class="block text-sm font-medium text-gray-700 mb-1"
-													>
-														Parent Category
-													</label>
-													<select
-														id="edit-parent-{category.id}"
-														name="parentId"
-														bind:value={editParentId}
-														class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
-													>
-														<option value="">None (Top Level)</option>
-														{#each parentOptions as option}
-															<option value={option.id}>
-																{'\u00A0'.repeat(option.level * 4)}{option.level > 0
-																	? '└─ '
-																	: ''}{option.name}
-															</option>
-														{/each}
-													</select>
-												</div>
+									<div>
+										<label
+											for="edit-parent-{category.id}"
+											class="block text-sm font-medium text-gray-700 mb-1"
+										>
+											Parent Category
+										</label>
+										<select
+											id="edit-parent-{category.id}"
+											name="parentId"
+											bind:value={editParentId}
+											class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+										>
+											<option value="">None (Top Level)</option>
+											{#each parentOptions as option}
+												<option value={option.id}>
+													{option.displayName}
+												</option>
+											{/each}
+										</select>
+									</div>
 											</div>
 
 											<div class="flex gap-2 mt-4">
@@ -278,7 +282,7 @@
 							>
 								<input type="hidden" name="id" value={category.id} />
 
-								{#if form?.error && form?.editingId === category.id}
+								{#if form?.error && 'editingId' in form && form?.editingId === category.id}
 									<div
 										class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
 									>
@@ -320,7 +324,7 @@
 											<option value="">None (Top Level)</option>
 											{#each parentOptions as option}
 												<option value={option.id}>
-													{'\u00A0'.repeat(option.level * 2)}{option.name}
+													{option.displayName}
 												</option>
 											{/each}
 										</select>
@@ -433,14 +437,12 @@
 							id="create-parent"
 							name="parentId"
 							bind:value={createParentId}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 						>
 							<option value="">None (Top Level)</option>
 							{#each flatCategories as category}
 								<option value={category.id}>
-									{'\u00A0'.repeat(category.level * 4)}{category.level > 0
-										? '└─ '
-										: ''}{category.name}
+									{category.displayName}
 								</option>
 							{/each}
 						</select>

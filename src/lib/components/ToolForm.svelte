@@ -42,27 +42,25 @@
 		return defaultValue;
 	}
 
-	// Flatten categories into a hierarchical list with indentation
+	// Flatten categories into a hierarchical list with breadcrumb paths
 	interface FlatCategory {
 		id: number
-		name: string
-		level: number
+		displayName: string  // Full breadcrumb path like "Hand Tools > Screwdrivers"
 	}
 
-	function flattenCategories(cats: CategoryWithChildren[], level = 0): FlatCategory[] {
+	function flattenCategories(cats: CategoryWithChildren[], parentPath = ''): FlatCategory[] {
 		const result: FlatCategory[] = []
 		
 		for (const cat of cats) {
-			// Only include categories that don't have a parent (top-level) or are children
-			// This prevents duplicates when categories appear both as top-level and as children
+			const currentPath = parentPath ? `${parentPath} > ${cat.name}` : cat.name
+			
 			result.push({
 				id: cat.id,
-				name: cat.name,
-				level
+				displayName: currentPath
 			})
 			
 			if (cat.children && cat.children.length > 0) {
-				result.push(...flattenCategories(cat.children, level + 1))
+				result.push(...flattenCategories(cat.children, currentPath))
 			}
 		}
 		
@@ -148,13 +146,13 @@
 			name="categoryId"
 			value={getValue('categoryId')}
 			required
-			class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+			class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 			class:border-red-500={errors.categoryId}
 		>
 			<option value="">Select a category</option>
 			{#each flatCategories as category}
 				<option value={category.id}>
-					{'\u00A0'.repeat(category.level * 4)}{category.level > 0 ? '└─ ' : ''}{category.name}
+					{category.displayName}
 				</option>
 			{/each}
 		</select>
