@@ -4,7 +4,11 @@ import prisma from '$lib/prisma'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// Protect route - only admins can access
-	if (!locals.user || locals.user.role !== 'ADMIN') {
+	if (!locals.user) {
+		throw redirect(303, '/login')
+	}
+	
+	if (locals.user.role !== 'ADMIN') {
 		throw redirect(303, '/')
 	}
 

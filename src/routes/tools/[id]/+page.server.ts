@@ -2,7 +2,12 @@ import type { PageServerLoad, Actions } from './$types'
 import { error, redirect } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+    // Redirect to login if not authenticated
+    if (!locals.user) {
+        throw redirect(303, '/login')
+    }
+    
     const toolId = parseInt(params.id)
 
     if (isNaN(toolId)) {
@@ -32,7 +37,12 @@ export const load: PageServerLoad = async ({ params }) => {
 
 
 export const actions: Actions = {
-	delete: async ({ params }) => {
+	delete: async ({ params, locals }) => {
+		// Check authentication
+		if (!locals.user) {
+			throw redirect(303, '/login')
+		}
+		
 		const toolId = parseInt(params.id);
 		
 		// Delete associated files and damage reports (cascade)

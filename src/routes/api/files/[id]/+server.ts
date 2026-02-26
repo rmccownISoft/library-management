@@ -1,9 +1,14 @@
 import type { RequestHandler } from './$types';
-import { error } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { readFileSync } from 'fs';
 import prisma from '$lib/prisma';
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, locals }) => {
+	// Require authentication to access files
+	if (!locals.user) {
+		return json({ error: 'Authentication required' }, { status: 401 });
+	}
+	
 	const fileId = parseInt(params.id);
 
 	if (isNaN(fileId)) {

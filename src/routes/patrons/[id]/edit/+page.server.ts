@@ -2,7 +2,12 @@ import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail, error } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	// Redirect to login if not authenticated
+	if (!locals.user) {
+		throw redirect(303, '/login')
+	}
+	
 	const patronId = parseInt(params.id)
 
 	if (isNaN(patronId)) {
@@ -21,7 +26,12 @@ export const load: PageServerLoad = async ({ params }) => {
 }
 
 export const actions: Actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
+		// Check authentication
+		if (!locals.user) {
+			throw redirect(303, '/login')
+		}
+		
 		const patronId = parseInt(params.id)
 		
 		if (isNaN(patronId)) {
