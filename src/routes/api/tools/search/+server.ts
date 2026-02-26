@@ -2,7 +2,12 @@ import { json } from '@sveltejs/kit'
 import type { RequestHandler } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+    // Require authentication to search tools
+    if (!locals.user) {
+        return json({ error: 'Authentication required' }, { status: 401 })
+    }
+    
     const searchQuery = url.searchParams.get('search') || ''
     
     // Return empty if no search query provided
