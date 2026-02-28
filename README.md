@@ -462,6 +462,11 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
+If needing to restart after config +env change 
+
+```bash
+pm2 restart ecosystem.config.cjs --update-env
+```
 ### Production Considerations
 
 - **Backups:** Regularly backup the `data/` directory (contains SQLite database)
@@ -629,3 +634,5 @@ This is an active development project. Please refer to the development guide in 
 ## License
 
 [Add your license here]
+
+
