@@ -3,7 +3,7 @@
     import type { CategoryModel, ToolModel } from '$generated/prisma/models'
 	import CameraCapture from './CameraCapture.svelte'
 	import Button from './Button.svelte'
-	
+
 	// import type { Category } from '@prisma/client' is supposed to work but doesn't
 	type CategoryWithChildren = CategoryModel & {
 		children?: CategoryWithChildren[]
@@ -18,18 +18,21 @@
 		submitText?: string
 	}
 
-    let { 
-		categories, 
-		tool = null, 
-		errors = {}, 
+    let {
+		categories,
+		tool = null,
+		errors = {},
 		values = {},
 		submitText = 'Submit'
 	}: Props = $props()
-    
+
 	let isSubmitting = $state(false)
 	let selectedFiles = $state<FileList | null>(null)
 	let showCamera = $state(false)
 	let capturedPhotos = $state<{ file: File; dataUrl: string }[]>([])
+
+	const MAX_UPLOAD_BYTES = 25 * 1024 * 1024 // 25MB — must match BODY_SIZE_LIMIT in ecosystem.config.cjs
+	let fileSizeError = $state('')
 
 	// Get field value (priority: form values > tool data > default)
 	function getValue(field: string, defaultValue: any = '') {
@@ -51,7 +54,7 @@
 
 	function flattenCategories(cats: CategoryWithChildren[], level = 0): FlatCategory[] {
 		const result: FlatCategory[] = []
-		
+
 		for (const cat of cats) {
 			// Only include categories that don't have a parent (top-level) or are children
 			// This prevents duplicates when categories appear both as top-level and as children
@@ -60,46 +63,56 @@
 				name: cat.name,
 				level
 			})
-			
+
 			if (cat.children && cat.children.length > 0) {
 				result.push(...flattenCategories(cat.children, level + 1))
 			}
 		}
-		
+
 		return result
 	}
 
 	// Get only root categories (those without parents)
 	const rootCategories = categories.filter(cat => !cat.parentId)
 	const flatCategories = flattenCategories(rootCategories)
-	
+
 	// Handle camera capture
 	function handleCameraCapture(dataUrl: string, file: File) {
 		capturedPhotos = [...capturedPhotos, { file, dataUrl }]
 	}
-	
+
 	function toggleCamera() {
 		showCamera = !showCamera
 	}
-	
+
 	function removeCapturedPhoto(index: number) {
 		capturedPhotos = capturedPhotos.filter((_, i) => i !== index)
 	}
-	
+
 </script>
 
-<form 
+<form
 	method="POST"
 	enctype="multipart/form-data"
-	use:enhance={({ formData }) => {
+	use:enhance={({ formData, cancel }) => {
+		if (fileSizeError) {
+			cancel();
+			return;
+		}
 		isSubmitting = true;
-		
+		fileSizeError = '';
+
 		// Add captured photos directly to FormData
-		capturedPhotos.forEach((photo, index) => {
+		capturedPhotos.forEach((photo) => {
 			formData.append('toolFiles', photo.file);
 		});
-		
-		return async ({ update }) => {
+
+		return async ({ result, update }) => {
+			if (result.type === 'error') {
+				isSubmitting = false;
+				fileSizeError = 'Upload failed. The files may be too large or a server error occurred. Please try again.';
+				return;
+			}
 			await update();
 			isSubmitting = false;
 		};
@@ -224,7 +237,7 @@
 		<label class="block text-sm font-medium text-gray-700 mb-2">
 			Add Picture(s)
 		</label>
-		
+
 		<div class="flex gap-2 mb-3">
 			<!-- File Upload Button -->
 			<input
@@ -237,6 +250,13 @@
 				onchange={(e) => {
 					const target = e.target as HTMLInputElement;
 					selectedFiles = target.files;
+					fileSizeError = '';
+					if (target.files) {
+						const totalBytes = Array.from(target.files).reduce((sum, f) => sum + f.size, 0);
+						if (totalBytes > MAX_UPLOAD_BYTES) {
+							fileSizeError = `Files are too large (${(totalBytes / 1024 / 1024).toFixed(1)} MB total). Maximum is 25 MB.`;
+						}
+					}
 				}}
 			/>
 			<label
@@ -248,7 +268,7 @@
 				</svg>
 				Choose Files
 			</label>
-			
+
 			<!-- Camera Button -->
 			<button
 				type="button"
@@ -262,18 +282,18 @@
 				{showCamera ? 'Hide Camera' : 'Take Photo'}
 			</button>
 		</div>
-		
+
 		<!-- Camera Component -->
 		{#if showCamera}
 			<div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-				<CameraCapture 
+				<CameraCapture
 					oncapture={handleCameraCapture}
 					onclose={toggleCamera}
 					captureWidth={800}
 				/>
 			</div>
 		{/if}
-		
+
 		<!-- Display selected files from file input -->
 		{#if selectedFiles && selectedFiles.length > 0}
 			<div class="mt-3">
@@ -291,7 +311,11 @@
 				</div>
 			</div>
 		{/if}
-		
+
+		{#if fileSizeError}
+			<p class="text-red-600 text-sm mt-2">{fileSizeError}</p>
+		{/if}
+
 		<!-- Display captured photos as thumbnails -->
 		{#if capturedPhotos.length > 0}
 			<div class="mt-3">
@@ -299,8 +323,8 @@
 				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
 					{#each capturedPhotos as photo, index}
 						<div class="relative aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-green-500">
-							<img 
-								src={photo.dataUrl} 
+							<img
+								src={photo.dataUrl}
 								alt="Captured photo {index + 1}"
 								class="w-full h-full object-cover"
 							/>
@@ -320,7 +344,7 @@
 				</div>
 			</div>
 		{/if}
-		
+
 		{#if (selectedFiles?.length || 0) + capturedPhotos.length === 0}
 			<p class="text-sm text-gray-500 mt-2">No files selected or photos captured yet</p>
 		{:else}
@@ -329,20 +353,20 @@
 			</p>
 		{/if}
 	</div>
-	
-	
+
+
 	<!-- Form Actions -->
 	<div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-		<Button 
-			variant="secondary" 
-			type="a" 
+		<Button
+			variant="secondary"
+			type="a"
 			href={tool ? `/tools/${tool.id}` : '/tools'}
 		>
 			Cancel
 		</Button>
-		<Button 
-			variant="primary" 
-			type="submit" 
+		<Button
+			variant="primary"
+			type="submit"
 			disabled={isSubmitting}
 		>
 			{isSubmitting ? 'Saving...' : submitText}
