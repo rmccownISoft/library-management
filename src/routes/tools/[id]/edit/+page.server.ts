@@ -5,7 +5,12 @@ import { ConditionStatus, EntityType } from '$generated/prisma/enums'
 import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
 
 
-export const load: PageServerLoad = async({ params }) => {
+export const load: PageServerLoad = async({ params, locals }) => {
+    // Redirect to login if not authenticated
+    if (!locals.user) {
+        throw redirect(303, '/login')
+    }
+    
     const toolId = parseInt(params.id)
 
     if (isNaN(toolId)) {
