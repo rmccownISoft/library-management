@@ -11,7 +11,8 @@ module.exports = {
 			max_memory_restart: '1G',
 			env: {
 				NODE_ENV: 'production',
-				PORT: 3000
+				PORT: 3000,
+				BODY_SIZE_LIMIT: 26214400  // 25MB for multiple pictures?  
 			},
 			error_file: 'logs/error.log',
 			out_file: 'logs/out.log',
