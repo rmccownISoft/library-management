@@ -15,7 +15,7 @@ module.exports = {
 				BODY_SIZE_LIMIT: 26214400,  // 25MB for multiple pictures?  
 				DATABASE_URL: "file:./data/library.db",
 				HOST: "0.0.0.0",
-				ORIGIN: "165.232.137.150:3000",
+				ORIGIN: "https://pfbonnet.dev",
 				UPLOAD_BASE_PATH: '/var/www/html/files'
 			},
 			error_file: 'logs/error.log',
