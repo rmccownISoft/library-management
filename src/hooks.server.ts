@@ -1,6 +1,17 @@
 import { type Handle, type HandleServerError } from '@sveltejs/kit';
 import { validateSession } from '$lib/server/auth';
 
+// Log environment config on startup
+console.log('[startup] Environment:', {
+	NODE_ENV: process.env.NODE_ENV,
+	PORT: process.env.PORT,
+	HOST: process.env.HOST,
+	ORIGIN: process.env.ORIGIN,
+	BODY_SIZE_LIMIT: process.env.BODY_SIZE_LIMIT,
+	DATABASE_URL: process.env.DATABASE_URL,
+	UPLOAD_BASE_PATH: process.env.UPLOAD_BASE_PATH,
+});
+
 // Common exploit paths to block
 const BLOCKED_PATHS = [
 	'/wp-admin',

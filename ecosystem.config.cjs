@@ -12,7 +12,11 @@ module.exports = {
 			env: {
 				NODE_ENV: 'production',
 				PORT: 3000,
-				BODY_SIZE_LIMIT: 26214400  // 25MB for multiple pictures?  
+				BODY_SIZE_LIMIT: 26214400,  // 25MB for multiple pictures?  
+				DATABASE_URL: "file:./data/library.db",
+				HOST: "0.0.0.0",
+				ORIGIN: "https://pfbonnet.dev",
+				UPLOAD_BASE_PATH: '/var/www/html/files'
 			},
 			error_file: 'logs/error.log',
 			out_file: 'logs/out.log',
