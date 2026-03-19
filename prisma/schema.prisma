@@ -68,8 +68,10 @@ model Patron {
   mailingCity    String
   mailingState   String
   mailingZipcode String
-  active         Boolean  @default(true)
-  blocked        Boolean  @default(false)
+  active                Boolean  @default(true)
+  blocked               Boolean  @default(false)
+  liabilityWaiverSigned Boolean  @default(false)
+  userAgreementSigned   Boolean  @default(false)
   overdueCount   Int      @default(0)
   damageCount    Int      @default(0)
   createdBy      Int      @default(0)

@@ -4,13 +4,13 @@
 	import { invalidateAll } from '$app/navigation'
 
 	let { data } = $props<{ data: PageData }>()
-	
+
 	// Check-in modal state
 	let showCheckinModal = $state(false)
 	let selectedCheckout = $state<{ id: number; toolName: string } | null>(null)
 	let checkinError = $state<string | null>(null)
 	let checkinSuccess = $state<string | null>(null)
-	
+
 	// Format date helper
 	function formatDate(date: Date | string) {
 		return new Date(date).toLocaleDateString('en-US', {
@@ -36,7 +36,7 @@
 
 	// Calculate active checkouts
 	const activeCheckouts = $derived(
-		data.patron.checkouts?.filter(c => c.status === 'CHECKED_OUT').length || 0
+		data.patron.checkouts?.filter((c: { status: string }) => c.status === 'CHECKED_OUT').length || 0
 	)
 
 	// Get checkout status color
@@ -139,7 +139,7 @@
 		<a href="/patrons" class="text-blue-600 hover:underline mb-4 inline-block">
 			← Back to Patrons
 		</a>
-		
+
 		<div class="flex justify-between items-start">
 			<div>
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">
@@ -149,18 +149,27 @@
 					{getStatusText(data.patron.active, data.patron.blocked)}
 				</span>
 			</div>
-			
+
 			<!-- Action Buttons -->
 			<div class="flex gap-2">
 				{#if data.patron.active && !data.patron.blocked}
-					<a 
-						href="/checkout?patronId={data.patron.id}"
-						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-					>
-						Checkout Tools
-					</a>
+					{#if data.patron.liabilityWaiverSigned && data.patron.userAgreementSigned}
+						<a
+							href="/checkout?patronId={data.patron.id}"
+							class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+						>
+							Checkout Tools
+						</a>
+					{:else}
+						<span
+							class="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+							title="Patron must sign liability waiver and user agreement before checking out"
+						>
+							Checkout Tools
+						</span>
+					{/if}
 				{/if}
-				<a 
+				<a
 					href="/patrons/{data.patron.id}/edit"
 					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 				>
@@ -185,7 +194,7 @@
 	<!-- Patron Information Card -->
 	<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Contact Information</h2>
-		
+
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<!-- Contact Methods -->
 			<div class="space-y-4">
@@ -199,7 +208,7 @@
 						</p>
 					</div>
 				{/if}
-				
+
 				{#if data.patron.phone}
 					<div>
 						<p class="text-sm text-gray-600">Phone Number</p>
@@ -211,7 +220,7 @@
 					</div>
 				{/if}
 			</div>
-			
+
 			<!-- Mailing Address -->
 			<div>
 				<p class="text-sm text-gray-600 mb-2">Mailing Address</p>
@@ -226,21 +235,44 @@
 	<!-- Statistics Card -->
 	<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Statistics</h2>
-		
+
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 			<div class="text-center">
 				<div class="text-2xl font-bold text-gray-900">{data.patron.overdueCount}</div>
 				<div class="text-sm text-gray-600">Overdue Items</div>
 			</div>
-			
+
 			<div class="text-center">
 				<div class="text-2xl font-bold text-gray-900">{data.patron.damageCount}</div>
 				<div class="text-sm text-gray-600">Damage Reports</div>
 			</div>
-			
+
 			<div class="text-center">
 				<div class="text-2xl font-bold text-gray-900">{activeCheckouts}</div>
 				<div class="text-sm text-gray-600">Active Checkouts</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Required Documents Card -->
+	<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+		<h2 class="text-xl font-semibold mb-4 text-gray-900">Required Documents</h2>
+		<div>
+			<div class="flex items-center justify-between py-2 border-b border-gray-200">
+				<span class="text-sm font-medium text-gray-700">Liability Waiver</span>
+				{#if data.patron.liabilityWaiverSigned}
+					<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Signed</span>
+				{:else}
+					<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Not signed</span>
+				{/if}
+			</div>
+			<div class="flex items-center justify-between py-2">
+				<span class="text-sm font-medium text-gray-700">User Agreement</span>
+				{#if data.patron.userAgreementSigned}
+					<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Signed</span>
+				{:else}
+					<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Not signed</span>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -250,7 +282,7 @@
 		<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 			<h2 class="text-xl font-semibold mb-4 text-gray-900">Agreement Files</h2>
 			<div class="space-y-3">
-				{#each data.patron.files as file}
+				{#each data.patron.files as file (file.id)}
 					<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
 						<div>
 							<p class="font-medium text-gray-900">{file.fileName}</p>
@@ -259,7 +291,7 @@
 							{/if}
 							<p class="text-sm text-gray-500">Uploaded {formatDate(file.uploadedAt)}</p>
 						</div>
-						<a 
+						<a
 							href="/api/files/{file.id}"
 							target="_blank"
 							class="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
@@ -275,7 +307,7 @@
 	<!-- Checkout History -->
 	<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Checkout History</h2>
-		
+
 		{#if data.patron.checkouts && data.patron.checkouts.length > 0}
 			<div class="overflow-x-auto">
 				<table class="w-full">
@@ -291,7 +323,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each data.patron.checkouts as checkout}
+						{#each data.patron.checkouts as checkout (checkout.id)}
 							<tr class="border-b border-gray-100 hover:bg-gray-50">
 								<td class="py-3 px-4">
 									<a href="/tools/{checkout.tool.id}" class="text-blue-600 hover:underline font-medium">
@@ -352,13 +384,13 @@
 	<!-- Account Details -->
 	<div class="bg-white border border-gray-200 rounded-lg p-6">
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Account Details</h2>
-		
+
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div>
 				<p class="text-sm text-gray-600">Created</p>
 				<p class="font-medium text-gray-900">{formatDate(data.patron.createdAt)}</p>
 			</div>
-			
+
 			<div>
 				<p class="text-sm text-gray-600">Last Updated</p>
 				<p class="font-medium text-gray-900">{formatDate(data.patron.updatedAt)}</p>
@@ -381,7 +413,7 @@
 			<p class="text-gray-700">
 				Are you sure you want to check in the following tool?
 			</p>
-			
+
 			<div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
 				<p class="font-semibold text-gray-900">{selectedCheckout.toolName}</p>
 			</div>
@@ -391,7 +423,7 @@
 					<p class="text-red-800 text-sm">{checkinError}</p>
 				</div>
 			{/if}
-			
+
 			<p class="text-sm text-gray-600">
 				This action cannot be undone.
 			</p>

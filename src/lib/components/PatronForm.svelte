@@ -13,25 +13,42 @@
 		mailingCity: string
 		mailingState: string
 		mailingZipcode: string
+		liabilityWaiverSigned?: boolean
+		userAgreementSigned?: boolean
+	}
+
+	interface ExistingFile {
+		id: number
+		fileName: string
+		label: string | null
+		uploadedAt: string | Date
 	}
 
 	interface Props {
 		patron: PatronFormData
 		errors?: Record<string, string>
 		submitText?: string
+		existingFiles?: ExistingFile[]
 	}
 
-	let { 
+	let {
 		patron,
 		errors = {},
-		submitText = 'Submit'
+		submitText = 'Submit',
+		existingFiles = []
 	}: Props = $props()
-	
+
 	let isSubmitting = $state(false)
+
+	function formatDate(date: Date | string): string {
+		const d = typeof date === 'string' ? new Date(date) : date
+		return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+	}
 </script>
 
-<form 
+<form
 	method="POST"
+	enctype="multipart/form-data"
 	use:enhance={() => {
 		isSubmitting = true;
 		
@@ -145,6 +162,74 @@
 		</div>
 	</div>
 	
+	<!-- Documents -->
+	<div class="mb-6">
+		<h3 class="text-lg font-medium text-gray-900 mb-3">Documents</h3>
+		<p class="text-sm text-gray-600 mb-3">Upload signed copies of the liability waiver and user agreement. Accepts PDF files or photos.</p>
+
+		<!-- Liability Waiver -->
+		<div class="mb-4">
+			<p class="text-sm font-medium text-gray-700 mb-1">Liability Waiver</p>
+			{#if existingFiles.find(f => f.label === 'Liability Waiver')}
+				{@const file = existingFiles.find(f => f.label === 'Liability Waiver')!}
+				<div class="flex items-center gap-2 mb-2 text-sm text-green-700">
+					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+					</svg>
+					<a href="/api/files/{file.id}" class="underline hover:text-green-900">{file.fileName}</a>
+					<span class="text-gray-500">— uploaded {formatDate(file.uploadedAt)}</span>
+				</div>
+			{/if}
+			<input
+				type="file"
+				name="liabilityWaiver"
+				accept=".pdf,image/*"
+				class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+			/>
+			<label class="flex items-center gap-2 mt-3 text-sm text-gray-700 cursor-pointer select-none">
+				<input
+					type="checkbox"
+					name="liabilityWaiverSigned"
+					checked={patron.liabilityWaiverSigned ?? false}
+					class="h-4 w-4 rounded border-gray-300 text-blue-600"
+				/>
+				Signed (paper copy on file)
+			</label>
+			<p class="mt-1 text-xs text-gray-500 ml-6">Check this if a signed paper copy has been collected but not yet uploaded.</p>
+		</div>
+
+		<!-- User Agreement -->
+		<div>
+			<p class="text-sm font-medium text-gray-700 mb-1">User Agreement</p>
+			{#if existingFiles.find(f => f.label === 'User Agreement')}
+				{@const file = existingFiles.find(f => f.label === 'User Agreement')!}
+				<div class="flex items-center gap-2 mb-2 text-sm text-green-700">
+					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+					</svg>
+					<a href="/api/files/{file.id}" class="underline hover:text-green-900">{file.fileName}</a>
+					<span class="text-gray-500">— uploaded {formatDate(file.uploadedAt)}</span>
+				</div>
+			{/if}
+			<input
+				type="file"
+				name="userAgreement"
+				accept=".pdf,image/*"
+				class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+			/>
+			<label class="flex items-center gap-2 mt-3 text-sm text-gray-700 cursor-pointer select-none">
+				<input
+					type="checkbox"
+					name="userAgreementSigned"
+					checked={patron.userAgreementSigned ?? false}
+					class="h-4 w-4 rounded border-gray-300 text-blue-600"
+				/>
+				Signed (paper copy on file)
+			</label>
+			<p class="mt-1 text-xs text-gray-500 ml-6">Check this if a signed paper copy has been collected but not yet uploaded.</p>
+		</div>
+	</div>
+
 	<!-- Form Actions -->
 	<div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
 		<Button 

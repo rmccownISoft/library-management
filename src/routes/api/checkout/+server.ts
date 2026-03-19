@@ -26,6 +26,22 @@ export const POST = async ({ request, locals }: RequestEvent) => {
             return json({ error: 'Patron not found' }, { status: 404 })
         }
 
+        if (!patron.active) {
+            return json({ error: 'This patron account is inactive' }, { status: 400 })
+        }
+
+        if (patron.blocked) {
+            return json({ error: 'This patron is blocked from checking out tools' }, { status: 400 })
+        }
+
+        if (!patron.liabilityWaiverSigned) {
+            return json({ error: 'Patron has not signed the liability waiver' }, { status: 400 })
+        }
+
+        if (!patron.userAgreementSigned) {
+            return json({ error: 'Patron has not signed the user agreement' }, { status: 400 })
+        }
+
         // Verify all tools exist and are available
         const tools = await prisma.tool.findMany({
             where: { id: { in: toolIds } },
