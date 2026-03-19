@@ -29,12 +29,11 @@ export const load: PageServerLoad = async ({ url, locals }) => {
         const toolsWithAvailability = tools.map(tool => {
             const checkedOutCount = tool.checkouts.length
             const availableCount = tool.quantity - checkedOutCount
-            
-            return {
-                ...tool,
-                availableCount,
-                checkouts: undefined // Remove checkouts from response for performance
-            }
+            const soonestDueDate = checkedOutCount > 0
+                ? tool.checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, tool.checkouts[0].dueDate)
+                : null
+
+            return { ...tool, checkedOutCount, availableCount, soonestDueDate, checkouts: undefined }
         })
 
         // Get categories with same structure as tools page

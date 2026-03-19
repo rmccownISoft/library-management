@@ -166,7 +166,16 @@
                                 </div>
                                 <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-gray-700 font-medium">Qty: {tool.quantity}</span>
+                                        <div class="flex flex-col gap-0.5">
+                                            <span class="font-medium {tool.availableCount > 0 ? 'text-green-600' : 'text-red-600'}">
+                                                {tool.availableCount} of {tool.quantity} available
+                                            </span>
+                                            {#if tool.checkedOutCount > 0}
+                                                <span class="text-amber-600 text-sm">
+                                                    {tool.checkedOutCount} checked out · due {tool.soonestDueDate ? new Date(tool.soonestDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                                </span>
+                                            {/if}
+                                        </div>
                                         <span class="px-3 py-1 rounded-full text-xs font-medium
                                             {tool.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-800' : ''}
                                             {tool.conditionStatus === 'NEEDS_REPAIR' ? 'bg-yellow-100 text-yellow-800' : ''}

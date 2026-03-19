@@ -22,6 +22,10 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					orderBy: {
 						id: 'asc'
 					}
+				},
+				checkouts: {
+					where: { status: 'CHECKED_OUT' },
+					select: { dueDate: true }
 				}
 			},
 			orderBy: {
@@ -87,8 +91,17 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const categoriesWithCounts = addCountToCategories(categories)
 
+	const toolsWithAvailability = tools.map(tool => {
+		const checkedOutCount = tool.checkouts.length
+		const availableCount = tool.quantity - checkedOutCount
+		const soonestDueDate = checkedOutCount > 0
+			? tool.checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, tool.checkouts[0].dueDate)
+			: null
+		return { ...tool, checkedOutCount, availableCount, soonestDueDate, checkouts: undefined }
+	})
+
 	return {
-		tools,
+		tools: toolsWithAvailability,
 		categories: categoriesWithCounts,
 		searchQuery
 	}
