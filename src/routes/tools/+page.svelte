@@ -6,7 +6,7 @@
 
     // Selected category state (null means "All Tools")
     let selectedCategoryId = $state<number | null>(null)
-    let selectedImage = $state<{ id: string; fileName: string } | null>(null)
+    let selectedImage = $state<{ id: number; fileName: string } | null>(null)
 
     // Search query state for input field
     let searchQuery = $state(data.searchQuery)
@@ -77,7 +77,7 @@
             All Tools ({data.tools.length})
         </button>
 
-        {#each rootCategories as category}
+        {#each rootCategories as category (category.id)}
             {@render categoryNode(category, 0)}
         {/each}
     </aside>
@@ -136,7 +136,7 @@
         {#if filteredTools().length === 0}
             <p class="text-gray-500 italic text-center py-8">No tools found</p>
         {:else}
-            {#each [...toolsByCategory()] as [categoryId, tools]}
+            {#each [...toolsByCategory()] as [categoryId, tools] (categoryId)}
                 <section class="mb-12">
                     <h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2 mb-4">
                         {getCategoryName(categoryId)}
@@ -233,7 +233,7 @@
         </button>
         
         {#if category.children.length > 0}
-            {#each category.children as child}
+            {#each category.children as child (child.id)}
                 {@render categoryNode(child, level + 1)}
             {/each}
         {/if}
