@@ -43,5 +43,6 @@ portainer_stack_volume.yml
 
 *.md
 !CLAUDE.md
+!/docs/PROJECT.md
 
 *.db
