@@ -1,53 +1,52 @@
 <script lang="ts">
     import type { PageData } from './$types'
     import type { PatronModel, ToolModel, CategoryModel } from '../../generated/prisma/models'
+    import { SvelteDate } from 'svelte/reactivity'
     import PatronSelector from '$lib/components/PatronSelector.svelte'
     import ToolSelector from '$lib/components/ToolSelector.svelte'
     import Button from '$lib/components/Button.svelte'
 
     let { data }: { data: PageData } = $props()
 
-    // State management
-    let selectedPatron = $state<PatronModel | null>(data.preSelectedPatron || null)
+    let selectedPatron = $state<PatronModel | null>(null)
     let selectedTools = $state<(ToolModel & { category: CategoryModel })[]>([])
-    let returnDate = $state('')
+    let returnDate = $state(getDefaultReturnDate())
     let isSubmitting = $state(false)
     let successMessage = $state('')
     let errorMessage = $state('')
 
-    // Initialize return date to 7 days from now
     $effect(() => {
-        const defaultDate = new Date()
-        defaultDate.setDate(defaultDate.getDate() + 7)
-        returnDate = defaultDate.toISOString().split('T')[0]
+        if (data.preSelectedPatron && selectedPatron === null) {
+            selectedPatron = data.preSelectedPatron
+        }
     })
 
-    // Handlers
+    function getDefaultReturnDate(): string {
+        const d = new SvelteDate()
+        d.setDate(d.getDate() + 7)
+        return d.toISOString().split('T')[0]
+    }
+
     function handleSelectPatron(patron: PatronModel | null) {
         selectedPatron = patron
-        // Clear any previous messages when changing patron
         successMessage = ''
         errorMessage = ''
     }
 
     function handleAddTool(tool: ToolModel & { category: CategoryModel }) {
-        // Prevent duplicate tools
         if (!selectedTools.some(t => t.id === tool.id)) {
             selectedTools = [...selectedTools, tool]
         }
-        // Clear any previous messages when adding tools
         successMessage = ''
         errorMessage = ''
     }
 
     function handleRemoveTool(toolId: number) {
         selectedTools = selectedTools.filter(t => t.id !== toolId)
-        // Clear any previous messages when removing tools
         successMessage = ''
         errorMessage = ''
     }
 
-    // Handle checkout submission
     async function handleCheckout() {
         if (!selectedPatron || selectedTools.length === 0 || !returnDate) return
 
@@ -75,15 +74,11 @@
                 return
             }
 
-            // Success - show message and reset form
             successMessage = `Successfully checked out ${result.count} tool${result.count !== 1 ? 's' : ''} to ${selectedPatron.firstName} ${selectedPatron.lastName}`
-            
-            // Reset form
+
             selectedPatron = null
             selectedTools = []
-            const defaultDate = new Date()
-            defaultDate.setDate(defaultDate.getDate() + 7)
-            returnDate = defaultDate.toISOString().split('T')[0]
+            returnDate = getDefaultReturnDate()
 
         } catch (error) {
             console.error('Checkout error:', error)
@@ -93,12 +88,19 @@
         }
     }
 
-    // Calculate if form is ready for submission
-    const canSubmit = $derived(selectedPatron && selectedTools.length > 0 && returnDate && !isSubmitting)
+    const patronIssues = $derived(selectedPatron ? [
+        ...(!selectedPatron.active ? ['Patron is inactive'] : []),
+        ...(selectedPatron.blocked ? ['Patron is blocked'] : []),
+        ...(!selectedPatron.liabilityWaiverSigned ? ['Liability waiver not signed'] : []),
+        ...(!selectedPatron.userAgreementSigned ? ['User agreement not signed'] : []),
+    ] : [])
+
+    const patronCanCheckout = $derived(selectedPatron !== null && patronIssues.length === 0)
+
+    const canSubmit = $derived(patronCanCheckout && selectedTools.length > 0 && returnDate && !isSubmitting)
 </script>
 
 <div class="p-8 max-w-6xl mx-auto">
-    <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Tool Checkout</h1>
         {#if data.preSelectedPatron}
@@ -111,7 +113,6 @@
         {/if}
     </div>
 
-    <!-- Success/Error Messages -->
     {#if successMessage}
         <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center">
@@ -138,30 +139,26 @@
         </div>
     {/if}
 
-    <!-- Progress Steps -->
     <div class="mb-8">
         <div class="flex items-center justify-center space-x-4">
-            <!-- Step 1: Select Patron -->
             <div class="flex items-center">
                 <div class="flex items-center justify-center w-8 h-8 rounded-full {selectedPatron ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'} font-medium">
                     1
                 </div>
                 <span class="ml-2 text-sm font-medium text-gray-900">Select Patron</span>
             </div>
-            
+
             <div class="w-16 h-0.5 bg-gray-300"></div>
-            
-            <!-- Step 2: Select Tools -->
+
             <div class="flex items-center">
-                <div class="flex items-center justify-center w-8 h-8 rounded-full {selectedTools.length > 0 ? 'bg-green-600 text-white' : selectedPatron ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'} font-medium">
+                <div class="flex items-center justify-center w-8 h-8 rounded-full {selectedTools.length > 0 ? 'bg-green-600 text-white' : patronCanCheckout ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'} font-medium">
                     2
                 </div>
                 <span class="ml-2 text-sm font-medium text-gray-900">Select Tools</span>
             </div>
-            
+
             <div class="w-16 h-0.5 bg-gray-300"></div>
-            
-            <!-- Step 3: Set Return Date -->
+
             <div class="flex items-center">
                 <div class="flex items-center justify-center w-8 h-8 rounded-full {returnDate ? 'bg-green-600 text-white' : selectedTools.length > 0 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'} font-medium">
                     3
@@ -171,15 +168,13 @@
         </div>
     </div>
 
-    <!-- Step 1: Patron Selection -->
-    <PatronSelector 
+    <PatronSelector
         patrons={data.patrons}
         onSelectPatron={handleSelectPatron}
         selectedPatron={selectedPatron}
     />
 
-    <!-- Step 2: Tool Selection (only show if patron selected) -->
-    {#if selectedPatron}
+    {#if patronCanCheckout}
         <ToolSelector
             tools={data.tools}
             categories={data.categories}
@@ -187,13 +182,12 @@
             selectedTools={selectedTools}
         />
 
-        <!-- Selected Tools Cart -->
         {#if selectedTools.length > 0}
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                 <h2 class="text-lg font-semibold text-blue-900 mb-4">
                     Selected Tools ({selectedTools.length})
                 </h2>
-                
+
                 <div class="space-y-3">
                     {#each selectedTools as tool (tool.id)}
                         <div class="flex justify-between items-center bg-white p-3 rounded border">
@@ -214,11 +208,10 @@
             </div>
         {/if}
 
-        <!-- Step 3: Return Date & Submit (only show if tools selected) -->
         {#if selectedTools.length > 0}
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Return Date & Checkout</h2>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                     <div>
                         <label for="returnDate" class="block text-sm font-medium text-gray-700 mb-2">
@@ -233,10 +226,10 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
-                    
+
                     <div>
-                        <Button 
-                            variant="success" 
+                        <Button
+                            variant="success"
                             disabled={!canSubmit}
                             onclick={handleCheckout}
                             class="w-full"
