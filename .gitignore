@@ -42,5 +42,6 @@ portainer_stack_volume.yml
 *.heapsnapshot
 
 *.md
+!CLAUDE.md
 
 *.db
