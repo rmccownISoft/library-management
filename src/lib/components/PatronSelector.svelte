@@ -1,36 +1,42 @@
 <script lang="ts">
     import type { PatronModel } from '../../generated/prisma/models'
+    import { SvelteURLSearchParams } from 'svelte/reactivity'
     import Button from '$lib/components/Button.svelte'
 
-    let { 
-        patrons, 
+    let {
+        patrons,
         onSelectPatron,
-        selectedPatron 
+        selectedPatron
     }: {
         patrons: PatronModel[];
         onSelectPatron: (patron: PatronModel | null) => void;
         selectedPatron?: PatronModel | null;
     } = $props()
 
-    // Search form state
     let searchLastName = $state('')
     let searchFirstName = $state('')
     let searchResults = $state<PatronModel[]>([])
     let hasSearched = $state(false)
 
-    // Perform search
+    const patronIssues = $derived(selectedPatron ? [
+        ...(!selectedPatron.active ? ['Patron is inactive'] : []),
+        ...(selectedPatron.blocked ? ['Patron is blocked'] : []),
+        ...(!selectedPatron.liabilityWaiverSigned ? ['Liability waiver not signed'] : []),
+        ...(!selectedPatron.userAgreementSigned ? ['User agreement not signed'] : []),
+    ] : [])
+
     async function performSearch(event: SubmitEvent) {
         event.preventDefault()
-        
+
         if (!searchLastName.trim() && !searchFirstName.trim()) return
-        
-        const params = new URLSearchParams()
+
+        const params = new SvelteURLSearchParams()
         if (searchLastName.trim()) params.set('lastName', searchLastName.trim())
         if (searchFirstName.trim()) params.set('firstName', searchFirstName.trim())
-        
+
         const response = await fetch(`/api/patrons/search?${params}`)
         const data = await response.json()
-        
+
         searchResults = data.patrons || []
         hasSearched = true
     }
@@ -50,33 +56,60 @@
 
 <div class="patron-selector">
     {#if selectedPatron}
-        <!-- Selected Patron Display -->
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="text-lg font-semibold text-green-900">Selected Patron</h3>
-                    <p class="text-green-800 font-medium">{selectedPatron.lastName}, {selectedPatron.firstName}</p>
-                    {#if selectedPatron.phone || selectedPatron.email}
-                        <div class="text-sm text-green-700 mt-1">
-                            {#if selectedPatron.phone}<div>{selectedPatron.phone}</div>{/if}
-                            {#if selectedPatron.email}<div>{selectedPatron.email}</div>{/if}
-                        </div>
-                    {/if}
+        {#if patronIssues.length > 0}
+            <div class="{selectedPatron.blocked ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4 mb-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold {selectedPatron.blocked ? 'text-red-900' : 'text-amber-900'}">Selected Patron</h3>
+                        <p class="font-medium {selectedPatron.blocked ? 'text-red-800' : 'text-amber-800'}">{selectedPatron.lastName}, {selectedPatron.firstName}</p>
+                        <ul class="mt-2 space-y-1">
+                            {#each patronIssues as issue (issue)}
+                                <li class="text-sm font-medium {selectedPatron.blocked ? 'text-red-700' : 'text-amber-700'}">{issue}</li>
+                            {/each}
+                        </ul>
+                        <a
+                            href="/patrons/{selectedPatron.id}/edit"
+                            class="{selectedPatron.blocked ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'} mt-3 inline-block px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm"
+                        >
+                            Edit Patron
+                        </a>
+                    </div>
+                    <button
+                        type="button"
+                        onclick={() => onSelectPatron(null)}
+                        class="{selectedPatron.blocked ? 'text-red-700 hover:text-red-900' : 'text-amber-700 hover:text-amber-900'} font-medium"
+                    >
+                        Change Patron
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    onclick={() => onSelectPatron(null)}
-                    class="text-green-700 hover:text-green-900 font-medium"
-                >
-                    Change Patron
-                </button>
             </div>
-        </div>
+        {:else}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-900">Selected Patron</h3>
+                        <p class="text-green-800 font-medium">{selectedPatron.lastName}, {selectedPatron.firstName}</p>
+                        {#if selectedPatron.phone || selectedPatron.email}
+                            <div class="text-sm text-green-700 mt-1">
+                                {#if selectedPatron.phone}<div>{selectedPatron.phone}</div>{/if}
+                                {#if selectedPatron.email}<div>{selectedPatron.email}</div>{/if}
+                            </div>
+                        {/if}
+                    </div>
+                    <button
+                        type="button"
+                        onclick={() => onSelectPatron(null)}
+                        class="text-green-700 hover:text-green-900 font-medium"
+                    >
+                        Change Patron
+                    </button>
+                </div>
+            </div>
+        {/if}
     {:else}
-        <!-- Patron Search -->
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Select Patron</h2>
-            
+
             <form onsubmit={performSearch} class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -91,7 +124,7 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
-                    
+
                     <div>
                         <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
                             First Name <span class="text-gray-500">(optional)</span>
@@ -105,7 +138,7 @@
                         />
                     </div>
                 </div>
-                
+
                 <div class="flex gap-2">
                     <button
                         type="submit"
@@ -113,7 +146,7 @@
                     >
                         Search Patrons
                     </button>
-                    
+
                     {#if hasSearched}
                         <button
                             type="button"
@@ -126,7 +159,6 @@
                 </div>
             </form>
 
-            <!-- Search Results -->
             {#if hasSearched}
                 <div class="mt-6">
                     {#if searchResults.length === 0}
@@ -135,8 +167,9 @@
                         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
                             <div class="max-h-80 overflow-y-auto">
                                 {#each searchResults as patron (patron.id)}
-                                    <div 
-                                        class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors last:border-b-0 flex justify-between items-center"
+                                    <button
+                                        type="button"
+                                        class="w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors last:border-b-0 flex justify-between items-center"
                                         onclick={() => handleSelectPatron(patron)}
                                     >
                                         <div>
@@ -152,11 +185,23 @@
                                             <div class="text-sm text-gray-600 mt-1">
                                                 {patron.mailingStreet}
                                             </div>
+                                            <div class="flex flex-wrap gap-1 mt-2">
+                                                {#if !patron.active}
+                                                    <span class="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">Inactive</span>
+                                                {/if}
+                                                {#if patron.blocked}
+                                                    <span class="inline-block px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded">Blocked</span>
+                                                {/if}
+                                                {#if !patron.liabilityWaiverSigned}
+                                                    <span class="inline-block px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded">No Waiver</span>
+                                                {/if}
+                                                {#if !patron.userAgreementSigned}
+                                                    <span class="inline-block px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded">No Agreement</span>
+                                                {/if}
+                                            </div>
                                         </div>
-                                        <Button variant="primary">
-                                            Select
-                                        </Button>
-                                    </div>
+                                        <Button variant="primary">Select</Button>
+                                    </button>
                                 {/each}
                             </div>
                         </div>
