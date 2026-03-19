@@ -91,13 +91,13 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const categoriesWithCounts = addCountToCategories(categories)
 
-	const toolsWithAvailability = tools.map(tool => {
-		const checkedOutCount = tool.checkouts.length
+	const toolsWithAvailability = tools.map(({ checkouts, ...tool }) => {
+		const checkedOutCount = checkouts.length
 		const availableCount = tool.quantity - checkedOutCount
 		const soonestDueDate = checkedOutCount > 0
-			? tool.checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, tool.checkouts[0].dueDate)
+			? checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, checkouts[0].dueDate)
 			: null
-		return { ...tool, checkedOutCount, availableCount, soonestDueDate, checkouts: undefined }
+		return { ...tool, checkedOutCount, availableCount, soonestDueDate }
 	})
 
 	return {

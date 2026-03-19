@@ -39,14 +39,14 @@ export const GET: RequestHandler = async ({ url, locals }) => {
         })
 
         // Calculate available counts for each tool
-        const toolsWithAvailability = tools.map(tool => {
-            const checkedOutCount = tool.checkouts.length
+        const toolsWithAvailability = tools.map(({ checkouts, ...tool }) => {
+            const checkedOutCount = checkouts.length
             const availableCount = tool.quantity - checkedOutCount
             const soonestDueDate = checkedOutCount > 0
-                ? tool.checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, tool.checkouts[0].dueDate)
+                ? checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, checkouts[0].dueDate)
                 : null
 
-            return { ...tool, checkedOutCount, availableCount, soonestDueDate, checkouts: undefined }
+            return { ...tool, checkedOutCount, availableCount, soonestDueDate }
         })
 
         return json({ tools: toolsWithAvailability })
