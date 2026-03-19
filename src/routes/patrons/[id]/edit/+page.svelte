@@ -14,7 +14,9 @@
 		mailingStreet: form?.values?.mailingStreet ?? data.patron.mailingStreet,
 		mailingCity: form?.values?.mailingCity ?? data.patron.mailingCity,
 		mailingState: form?.values?.mailingState ?? data.patron.mailingState,
-		mailingZipcode: form?.values?.mailingZipcode ?? data.patron.mailingZipcode
+		mailingZipcode: form?.values?.mailingZipcode ?? data.patron.mailingZipcode,
+		liabilityWaiverSigned: data.patron.liabilityWaiverSigned,
+		userAgreementSigned: data.patron.userAgreementSigned
 	})
 </script>
 
@@ -35,9 +37,10 @@
 	</div>
 
 	<!-- Patron Form -->
-	<PatronForm 
+	<PatronForm
 		{patron}
 		errors={form?.errors ?? {}}
 		submitText="Update Patron"
+		existingFiles={data.patron.files}
 	/>
 </div>

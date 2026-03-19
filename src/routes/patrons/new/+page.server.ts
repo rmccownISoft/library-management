@@ -1,6 +1,8 @@
 import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
+import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
+import { EntityType } from '$generated/prisma/enums'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// Redirect to login if not authenticated
@@ -21,7 +23,11 @@ export const actions: Actions = {
 		}
 		
 		const formData = await request.formData()
-		
+
+		// Extract files before other form data
+		const liabilityWaiverFiles = (formData.getAll('liabilityWaiver') as File[]).filter(f => f.size > 0)
+		const userAgreementFiles = (formData.getAll('userAgreement') as File[]).filter(f => f.size > 0)
+
 		// Extract and validate form data
 		const firstName = formData.get('firstName') as string
 		const lastName = formData.get('lastName') as string
@@ -104,6 +110,10 @@ export const actions: Actions = {
 			})
 		}
 		
+		// Resolve signed flags before creating — file upload auto-signs
+		const liabilityWaiverSigned = formData.get('liabilityWaiverSigned') === 'on' || liabilityWaiverFiles.length > 0
+		const userAgreementSigned = formData.get('userAgreementSigned') === 'on' || userAgreementFiles.length > 0
+
 		// Create patron
 		const patron = await prisma.patron.create({
 			data: {
@@ -115,15 +125,30 @@ export const actions: Actions = {
 				mailingCity: mailingCity.trim(),
 				mailingState: mailingState.trim(),
 				mailingZipcode: mailingZipcode.trim(),
-				createdBy: locals.user.id
+				createdBy: locals.user.id,
+				liabilityWaiverSigned,
+				userAgreementSigned
 			}
 		})
 		
-		// TODO: Redirect to the new patron's detail page when implemented
-		// throw redirect(303, `/patrons/${patron.id}`)
-		// For now, redirect to patron list (patron variable will be used in future redirect)
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const patronId = patron.id // Keep reference for future use
-		throw redirect(303, `/patrons`)
+		if (liabilityWaiverFiles.length > 0) {
+			await writeMultipleFilesAndPrismaCreate(liabilityWaiverFiles, {
+				entityType: EntityType.PATRON,
+				entityId: patron.id,
+				uploadedBy: locals.user.id,
+				label: 'Liability Waiver'
+			})
+		}
+
+		if (userAgreementFiles.length > 0) {
+			await writeMultipleFilesAndPrismaCreate(userAgreementFiles, {
+				entityType: EntityType.PATRON,
+				entityId: patron.id,
+				uploadedBy: locals.user.id,
+				label: 'User Agreement'
+			})
+		}
+
+		throw redirect(303, `/patrons/${patron.id}`)
 	}
 }
