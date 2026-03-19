@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PageData } from './$types'
     import Button from '$lib/components/Button.svelte'
-
+    import { SvelteMap } from 'svelte/reactivity'
     let { data }: { data: PageData } = $props()
 
     // Selected category state (null means "All Tools")
@@ -46,7 +46,7 @@
 
     // Group tools by category
     const toolsByCategory = $derived(() => {
-        const grouped = new Map<number, typeof data.tools>()
+        const grouped = new SvelteMap<number, typeof data.tools>()
         
         for (const tool of filteredTools()) {
             const categoryId = tool.categoryId
