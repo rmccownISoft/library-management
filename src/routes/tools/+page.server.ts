@@ -91,7 +91,13 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const categoriesWithCounts = addCountToCategories(categories)
 
-	const toolsWithAvailability = tools.map(({ checkouts, ...tool }) => {
+	type ToolWithAvailability = Omit<typeof tools[0], 'checkouts'> & {
+		checkedOutCount: number
+		availableCount: number
+		soonestDueDate: Date | null
+	}
+
+	const toolsWithAvailability: ToolWithAvailability[] = tools.map(({ checkouts, ...tool }) => {
 		const checkedOutCount = checkouts.length
 		const availableCount = tool.quantity - checkedOutCount
 		const soonestDueDate = checkedOutCount > 0
