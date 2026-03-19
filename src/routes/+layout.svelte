@@ -9,7 +9,7 @@
 	{#if data?.user}
 		<nav>
 			<div class="nav-brand">
-				<a href="/">Lincoln Tool Library</a>
+				<a href="/">Near South Lincoln Tool Library</a>
 			</div>
 			<div class="nav-links">
 				<a href="/" class:active={page.url.pathname === '/'}> Home </a>
