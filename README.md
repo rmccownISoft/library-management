@@ -183,82 +183,53 @@ pnpm build
 pm2 restart library-management
 ```
 
-### Setting up Nginx Reverse Proxy (Optional)
+### Setting up Caddy Reverse Proxy (Optional)
 
-For production deployments, it's recommended to use Nginx as a reverse proxy:
+For production deployments, it's recommended to use Caddy as a reverse proxy. Caddy handles HTTPS automatically via Let's Encrypt — no separate Certbot setup needed.
 
-1. **Install Nginx:**
+1. **Install Caddy:**
 
 ```bash
 sudo apt update
-sudo apt install -y nginx
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install -y caddy
 ```
 
-2. **Create Nginx configuration:**
+2. **View the current Caddyfile:**
 
 ```bash
-sudo nano /etc/nginx/sites-available/library-management
+cat /etc/caddy/Caddyfile
 ```
 
-Add this configuration:
+3. **Edit the Caddyfile:**
 
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;  # or your server IP
+```bash
+sudo nano /etc/caddy/Caddyfile
+```
 
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+Minimal configuration (replace `yourdomain.com` with your domain — HTTPS is automatic):
+
+```
+yourdomain.com {
+    reverse_proxy localhost:3000
 }
 ```
 
-3. **Enable the site:**
+To serve multiple domains pointing to the same app:
 
-```bash
-sudo ln -s /etc/nginx/sites-available/library-management /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+```
+yourdomain.com, otherdomain.com {
+    reverse_proxy localhost:3000
+}
 ```
 
-4. **Update .env with your domain:**
+4. **Reload Caddy to apply changes:**
 
 ```bash
-nano .env
-# Uncomment and set: ORIGIN="http://yourdomain.com"
-```
-
-Then restart the application:
-
-```bash
-pnpm build
-pm2 restart library-management
-```
-
-### Setting up SSL with Let's Encrypt (Optional)
-
-```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
-
-# Obtain SSL certificate
-sudo certbot --nginx -d yourdomain.com
-
-# Update .env with HTTPS
-nano .env
-# Set: ORIGIN="https://yourdomain.com"
-
-# Rebuild and restart
-pnpm build
-pm2 restart library-management
+sudo systemctl reload caddy
 ```
 
 ### Troubleshooting
@@ -423,43 +394,24 @@ docker-compose up -d
 docker-compose exec app sh -c "npx prisma migrate deploy"
 ```
 
-3. **Optional: Set up reverse proxy with Nginx:**
+3. **Optional: Set up reverse proxy with Caddy:**
 
 ```bash
-# Install Nginx
-sudo apt install -y nginx
-
-# Create Nginx configuration
-sudo nano /etc/nginx/sites-available/library-management
+sudo nano /etc/caddy/Caddyfile
 ```
 
-Add this configuration:
+Add this configuration (HTTPS is handled automatically):
 
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+```
+yourdomain.com {
+    reverse_proxy localhost:3000
 }
 ```
 
-Enable the site:
+Reload Caddy:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/library-management /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+sudo systemctl reload caddy
 ```
 
 If needing to restart after config +env change 
