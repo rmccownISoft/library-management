@@ -80,40 +80,40 @@
 
 	<!-- Tools Content -->
 	<main class="p-8">
-		<div class="flex justify-between items-center mb-6">
-			<h1 class="text-3xl font-bold text-gray-900">
-				{selectedCategoryId === null ? 'Tool Library' : getCategoryName(selectedCategoryId)}
-			</h1>
-
-			<!-- Show login/management buttons only if authenticated -->
-			{#if data.user}
-				<div class="flex gap-2">
-					<a
-						href="/tools"
-						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-					>
-						Manage Tools
-					</a>
-				</div>
-			{:else}
+		{#if data.user}
+			<div class="flex justify-end mb-4">
 				<a
-					href="/login"
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+					href="/tools"
+					class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
 				>
-					Staff Login
+					Manage Tools
 				</a>
-			{/if}
-		</div>
-
-		{#if !data.user}
-			<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-				<p class="text-blue-800 text-sm">
-					📚 Browse our tool library below. <a href="/login" class="underline font-medium"
-						>Staff members can log in</a
-					> to manage inventory and checkout tools.
-				</p>
 			</div>
 		{/if}
+
+		<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+			<div class="pb-4 sm:pb-0 sm:pr-6">
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Hours</h2>
+				<div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-700">
+					<span>Friday</span><span>5:30 PM – 7:00 PM</span>
+					<span>Saturday</span><span>11:00 AM – 1:00 PM</span>
+				</div>
+			</div>
+			<div class="py-4 sm:py-0 sm:px-6">
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Location</h2>
+				<p class="text-sm text-gray-700">2045 E Street</p>
+				<p class="text-sm text-gray-700">Basement of the Hope House – First Plymouth</p>
+			</div>
+			<div class="pt-4 sm:pt-0 sm:pl-6">
+				<h2 class="text-lg font-semibold text-gray-900 mb-2">Questions?</h2>
+				<p class="text-sm text-gray-700">Email: <a href="mailto:NSToolLibrary@gmail.com" class="text-blue-600 hover:underline">NSToolLibrary@gmail.com</a></p>
+				<p class="text-sm text-gray-700">Phone: <a href="tel:4024131347" class="text-blue-600 hover:underline">402-413-1347</a></p>
+			</div>
+		</div>
+
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">
+			{selectedCategoryId === null ? 'All Tools' : getCategoryName(selectedCategoryId)}
+		</h1>
 
 		{#if filteredTools().length === 0}
 			<p class="text-gray-500 italic text-center py-8">No tools found</p>
