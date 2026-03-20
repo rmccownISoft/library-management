@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { PageData } from './$types'
     import Button from '$lib/components/Button.svelte'
-
+    import { SvelteMap } from 'svelte/reactivity'
     let { data }: { data: PageData } = $props()
 
     // Selected category state (null means "All Tools")
     let selectedCategoryId = $state<number | null>(null)
-    let selectedImage = $state<{ id: string; fileName: string } | null>(null)
+    let selectedImage = $state<{ id: number; fileName: string } | null>(null)
 
     // Search query state for input field
     let searchQuery = $state(data.searchQuery)
@@ -46,7 +46,7 @@
 
     // Group tools by category
     const toolsByCategory = $derived(() => {
-        const grouped = new Map<number, typeof data.tools>()
+        const grouped = new SvelteMap<number, typeof data.tools>()
         
         for (const tool of filteredTools()) {
             const categoryId = tool.categoryId
@@ -77,7 +77,7 @@
             All Tools ({data.tools.length})
         </button>
 
-        {#each rootCategories as category}
+        {#each rootCategories as category (category.id)}
             {@render categoryNode(category, 0)}
         {/each}
     </aside>
@@ -136,7 +136,7 @@
         {#if filteredTools().length === 0}
             <p class="text-gray-500 italic text-center py-8">No tools found</p>
         {:else}
-            {#each [...toolsByCategory()] as [categoryId, tools]}
+            {#each [...toolsByCategory()] as [categoryId, tools] (categoryId)}
                 <section class="mb-12">
                     <h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2 mb-4">
                         {getCategoryName(categoryId)}
@@ -166,7 +166,16 @@
                                 </div>
                                 <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-gray-700 font-medium">Qty: {tool.quantity}</span>
+                                        <div class="flex flex-col gap-0.5">
+                                            <span class="font-medium {tool.availableCount > 0 ? 'text-green-600' : 'text-red-600'}">
+                                                {tool.availableCount} of {tool.quantity} available
+                                            </span>
+                                            {#if tool.checkedOutCount > 0}
+                                                <span class="text-amber-600 text-sm">
+                                                    {tool.checkedOutCount} checked out · due {tool.soonestDueDate ? new Date(tool.soonestDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                                </span>
+                                            {/if}
+                                        </div>
                                         <span class="px-3 py-1 rounded-full text-xs font-medium
                                             {tool.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-800' : ''}
                                             {tool.conditionStatus === 'NEEDS_REPAIR' ? 'bg-yellow-100 text-yellow-800' : ''}
@@ -224,7 +233,7 @@
         </button>
         
         {#if category.children.length > 0}
-            {#each category.children as child}
+            {#each category.children as child (child.id)}
                 {@render categoryNode(child, level + 1)}
             {/each}
         {/if}

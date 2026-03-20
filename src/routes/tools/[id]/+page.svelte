@@ -5,7 +5,7 @@
     let { data } = $props<{ data: PageData }>();
 	let showDeleteConfirm = $state(false);
 	let isDeleting = $state(false);
-	let selectedImage = $state<{ id: string; fileName: string } | null>(null);
+	let selectedImage = $state<{ id: number; fileName: string } | null>(null);
 	
 	// Format date helper
 	function formatDate(date: Date | string) {
@@ -78,8 +78,15 @@
 			</div>
 			
 			<div>
-				<p class="text-sm text-gray-600">Quantity Available</p>
-				<p class="font-medium text-gray-900">{data.tool.quantity}</p>
+				<p class="text-sm text-gray-600">Availability</p>
+				<p class="font-medium {data.tool.availableCount > 0 ? 'text-green-700' : 'text-red-600'}">
+					{data.tool.availableCount} of {data.tool.quantity} available
+				</p>
+				{#if data.tool.checkedOutCount > 0}
+					<p class="text-sm text-amber-600">
+						{data.tool.checkedOutCount} checked out · due {new Date(data.tool.soonestDueDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+					</p>
+				{/if}
 			</div>
 			
 			{#if data.tool.donor}

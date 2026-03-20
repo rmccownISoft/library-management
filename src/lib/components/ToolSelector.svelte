@@ -8,7 +8,7 @@
         onAddTool,
         selectedTools
     }: {
-        tools: (ToolModel & { category: CategoryModel, availableCount: number })[];
+        tools: (ToolModel & { category: CategoryModel, availableCount: number, checkedOutCount: number, soonestDueDate: Date | null })[];
         categories: (CategoryModel & { children?: CategoryModel[] })[];
         onAddTool: (tool: ToolModel & { category: CategoryModel }) => void;
         selectedTools: (ToolModel & { category: CategoryModel })[];
@@ -125,7 +125,7 @@
                     class="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
                     <option value={null}>All Categories</option>
-                    {#each categories as category}
+                    {#each categories as category (category.id)}
                         <option value={category.id}>{category.name}</option>
                     {/each}
                 </select>
@@ -161,11 +161,16 @@
                                 <div class="flex items-center gap-4 text-sm text-gray-600">
                                     <span>Total: {tool.quantity}</span>
                                     <span class="flex items-center gap-1">
-                                        Available: 
+                                        Available:
                                         <span class="font-medium {tool.availableCount > 0 ? 'text-green-600' : 'text-red-600'}">
                                             {tool.availableCount}
                                         </span>
                                     </span>
+                                    {#if tool.checkedOutCount > 0}
+                                        <span class="text-amber-600 text-sm">
+                                            {tool.checkedOutCount} out · due {tool.soonestDueDate ? new Date(tool.soonestDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                        </span>
+                                    {/if}
                                     <span class="px-2 py-1 rounded text-xs
                                         {tool.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-800' : ''}
                                         {tool.conditionStatus === 'NEEDS_REPAIR' ? 'bg-yellow-100 text-yellow-800' : ''}

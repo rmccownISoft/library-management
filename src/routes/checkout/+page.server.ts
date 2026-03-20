@@ -26,15 +26,20 @@ export const load: PageServerLoad = async ({ url, locals }) => {
         })
 
         // Calculate available counts for each tool
-        const toolsWithAvailability = tools.map(tool => {
-            const checkedOutCount = tool.checkouts.length
+        type ToolWithAvailability = Omit<typeof tools[0], 'checkouts'> & {
+            checkedOutCount: number
+            availableCount: number
+            soonestDueDate: Date | null
+        }
+
+        const toolsWithAvailability: ToolWithAvailability[] = tools.map(({ checkouts, ...tool }) => {
+            const checkedOutCount = checkouts.length
             const availableCount = tool.quantity - checkedOutCount
-            
-            return {
-                ...tool,
-                availableCount,
-                checkouts: undefined // Remove checkouts from response for performance
-            }
+            const soonestDueDate = checkedOutCount > 0
+                ? checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, checkouts[0].dueDate)
+                : null
+
+            return { ...tool, checkedOutCount, availableCount, soonestDueDate }
         })
 
         // Get categories with same structure as tools page

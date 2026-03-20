@@ -24,6 +24,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 					reporter: true  // Include when user system is implemented
 				},
 				orderBy: { reportedAt: 'desc' }
+			},
+			checkouts: {
+				where: { status: 'CHECKED_OUT' },
+				select: { dueDate: true }
 			}
         }
     })
@@ -32,7 +36,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         throw error(404, 'Tool not found')
     }
 
-    return { tool }
+    const { checkouts, ...toolData } = tool
+    const checkedOutCount = checkouts.length
+    const availableCount = tool.quantity - checkedOutCount
+    const soonestDueDate = checkedOutCount > 0
+        ? checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, checkouts[0].dueDate)
+        : null
+
+    return { tool: { ...toolData, checkedOutCount, availableCount, soonestDueDate } }
 }
 
 
