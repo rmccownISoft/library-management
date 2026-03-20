@@ -6,11 +6,11 @@
 </script>
 
 <div class="layout">
-	{#if data?.user}
-		<nav>
-			<div class="nav-brand">
-				<a href="/">Near South Lincoln Tool Library</a>
-			</div>
+	<nav>
+		<div class="nav-brand">
+			<a href="/">Near South Lincoln Tool Library</a>
+		</div>
+		{#if data?.user}
 			<div class="nav-links">
 				<a href="/" class:active={page.url.pathname === '/'}> Home </a>
 				<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
@@ -26,8 +26,10 @@
 					<button type="submit" class="logout-button">Logout</button>
 				</form>
 			</div>
-		</nav>
-	{/if}
+		{:else}
+			<a href="/login" class="logout-button">Login</a>
+		{/if}
+	</nav>
 
 	<div class="content">
 		{@render children()}
@@ -43,7 +45,7 @@
 	}
 
 	nav {
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		background: #912924;
 		color: white;
 		padding: 1rem 2rem;
 		display: flex;
