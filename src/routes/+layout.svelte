@@ -95,11 +95,6 @@
 		font-weight: 600;
 	}
 
-	.user-role {
-		font-size: 0.875rem;
-		opacity: 0.9;
-	}
-
 	.logout-button {
 		background: rgba(255, 255, 255, 0.2);
 		color: white;

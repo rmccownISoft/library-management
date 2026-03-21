@@ -152,14 +152,4 @@
 		border-left: 4px solid #2e7d32;
 	}
 
-	.help-text {
-		margin-top: 1.5rem;
-		text-align: center;
-		font-size: 0.85rem;
-		color: #666;
-	}
-
-	.help-text strong {
-		color: #2196f3;
-	}
 </style>
