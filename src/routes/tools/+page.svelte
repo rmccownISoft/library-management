@@ -7,6 +7,7 @@
     // Selected category state (null means "All Tools")
     let selectedCategoryId = $state<number | null>(null)
     let selectedImage = $state<{ id: number; fileName: string } | null>(null)
+    let sidebarOpen = $state(false)
 
     // Search query state for input field
     let searchQuery = $state(data.searchQuery)
@@ -67,19 +68,33 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-screen">
     <!-- Category Sidebar -->
-    <aside class="bg-gray-50 p-6 border-r border-gray-200 lg:sticky lg:top-0 min-h-screen lg:max-h-screen overflow-y-auto">
-        <h2 class="text-xl font-semibold mb-4 text-gray-900">Categories</h2>
-        
-        <button 
-            class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-gray-700 hover:bg-gray-200 {selectedCategoryId === null ? 'bg-blue-600 text-white font-medium hover:bg-blue-700' : ''}"
-            onclick={() => selectedCategoryId = null}
+    <aside class="bg-gray-50 p-6 border-r border-gray-200 lg:sticky lg:top-0 lg:min-h-screen lg:max-h-screen overflow-y-auto">
+        <!-- Mobile toggle button -->
+        <button
+            type="button"
+            class="lg:hidden w-full flex justify-between items-center px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 font-medium text-gray-800 transition-colors"
+            onclick={() => sidebarOpen = !sidebarOpen}
         >
-            All Tools ({data.tools.length})
+            <span>Filter by Category</span>
+            <span>{sidebarOpen ? '▲' : '▼'}</span>
         </button>
 
-        {#each rootCategories as category (category.id)}
-            {@render categoryNode(category, 0)}
-        {/each}
+        <!-- Desktop heading -->
+        <h2 class="hidden lg:block text-xl font-semibold mb-4 text-gray-900">Categories</h2>
+
+        <!-- Category list: always visible on desktop, toggled on mobile -->
+        <div class="lg:block {sidebarOpen ? 'block' : 'hidden'} mt-2 lg:mt-0">
+            <button
+                class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-gray-700 hover:bg-gray-200 {selectedCategoryId === null ? 'bg-blue-600 text-white font-medium hover:bg-blue-700' : ''}"
+                onclick={() => { selectedCategoryId = null; sidebarOpen = false }}
+            >
+                All Tools ({data.tools.length})
+            </button>
+
+            {#each rootCategories as category (category.id)}
+                {@render categoryNode(category, 0)}
+            {/each}
+        </div>
     </aside>
 
     <!-- Tools Content -->
@@ -225,9 +240,9 @@
 
 {#snippet categoryNode(category: typeof data.categories[0], level: number)}
     <div style="padding-left: {level * 1.25}rem">
-        <button 
+        <button
             class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-sm text-gray-700 hover:bg-gray-200 {selectedCategoryId === category.id ? 'bg-blue-600 text-white font-medium hover:bg-blue-700' : ''}"
-            onclick={() => selectedCategoryId = category.id}
+            onclick={() => { selectedCategoryId = category.id; sidebarOpen = false }}
         >
             {category.name} ({category._count.tools})
         </button>
