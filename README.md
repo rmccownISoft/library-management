@@ -173,14 +173,17 @@ git pull
 # Install any new dependencies
 pnpm install
 
-# Run any new migrations
+# Run any pending database migrations
 pnpm exec prisma migrate deploy
+
+# Regenerate Prisma client to match updated schema
+pnpm exec prisma generate
 
 # Rebuild the application
 pnpm build
 
 # Restart with PM2
-pm2 restart library-management
+pm2 restart library-management --update-env
 ```
 
 ### Setting up Caddy Reverse Proxy (Optional)
