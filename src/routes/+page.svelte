@@ -54,12 +54,29 @@
 	function getCategoryName(categoryId: number): string {
 		return data.categories.find((c) => c.id === categoryId)?.name || 'Unknown';
 	}
+
+	// Flat options list for mobile select dropdown
+	type FlatOption = { id: number; label: string }
+
+	function flattenCategories(cats: typeof data.categories, depth: number): FlatOption[] {
+		const result: FlatOption[] = []
+		for (const cat of cats) {
+			const prefix = '\u00A0\u00A0'.repeat(depth)
+			result.push({ id: cat.id, label: `${prefix}${cat.name} (${cat._count.tools})` })
+			if (cat.children?.length) {
+				result.push(...flattenCategories(cat.children, depth + 1))
+			}
+		}
+		return result
+	}
+
+	const flatCategoryOptions = $derived(flattenCategories(rootCategories, 0))
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-screen">
-	<!-- Category Sidebar -->
+<div class="lg:grid lg:grid-cols-[280px_1fr] min-h-screen">
+	<!-- Category Sidebar (desktop only) -->
 	<aside
-		class="bg-gray-50 p-6 border-r border-gray-200 lg:sticky lg:top-0 min-h-screen lg:max-h-screen overflow-y-auto"
+		class="hidden lg:block bg-gray-50 p-6 border-r border-gray-200 lg:sticky lg:top-0 lg:max-h-screen overflow-y-auto"
 	>
 		<h2 class="text-xl font-semibold mb-4 text-gray-900">Categories</h2>
 
@@ -80,6 +97,25 @@
 
 	<!-- Tools Content -->
 	<main class="p-8">
+		<!-- Mobile category dropdown -->
+		<div class="block lg:hidden mb-6">
+			<label for="category-select" class="block text-sm font-medium text-gray-700 mb-1">Filter by Category</label>
+			<select
+				id="category-select"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+				value={selectedCategoryId === null ? '' : String(selectedCategoryId)}
+				onchange={(e) => {
+					const val = (e.target as HTMLSelectElement).value
+					selectedCategoryId = val === '' ? null : Number(val)
+				}}
+			>
+				<option value="">All Tools ({data.tools.length})</option>
+				{#each flatCategoryOptions as opt (opt.id)}
+					<option value={String(opt.id)}>{opt.label}</option>
+				{/each}
+			</select>
+		</div>
+
 		{#if data.user}
 			<div class="flex justify-end mb-4">
 				<a

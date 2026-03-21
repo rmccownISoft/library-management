@@ -52,6 +52,8 @@
 		justify-content: space-between;
 		align-items: center;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	.nav-brand a {
@@ -64,6 +66,32 @@
 	.nav-links {
 		display: flex;
 		gap: 2rem;
+	}
+
+	@media (max-width: 768px) {
+		nav {
+			padding: 0.75rem 1rem;
+		}
+
+		.nav-brand {
+			flex: 1;
+		}
+
+		.nav-links {
+			order: 3;
+			width: 100%;
+			gap: 0.25rem;
+			flex-wrap: wrap;
+		}
+
+		.nav-links a {
+			padding: 0.4rem 0.75rem;
+			font-size: 0.9rem;
+		}
+
+		.nav-user {
+			order: 2;
+		}
 	}
 
 	.nav-links a {
