@@ -38,11 +38,16 @@ src/
 │   ├── tools/
 │   ├── checkout/
 │   ├── login/ logout/
-│   └── admin/categories/
+│   ├── admin/
+│   │   ├── categories/         # Category management (ADMIN only)
+│   │   ├── activity-log/       # Activity log viewer (ADMIN only)
+│   │   ├── +layout.server.ts   # Auth guard — redirects non-admins
+│   │   └── +layout.svelte      # Tab nav: Categories | Activity Log
 ├── lib/
 │   ├── components/             # PatronForm, ToolForm, PatronSelector, Button, Input, ConfirmModal
 │   ├── server/
 │   │   ├── auth.ts             # Session management, bcrypt
+│   │   ├── activityLog.ts      # logActivity() helper — never throws, logs to DB
 │   │   └── fileService.ts      # All file upload logic (use this, don't DIY)
 │   ├── prisma.ts               # Prisma singleton
 │   └── stores/                 # Toast notifications
@@ -103,18 +108,38 @@ prisma.patron.findUnique({
 ## Form Patterns (SvelteKit + Svelte 5)
 - Use `use:enhance` from `$app/forms` for progressive enhancement
 - Server actions return `fail(400, { errors, values })` on validation failure
+- Server actions return `fail(500, { serverError, errors: {}, values })` for unexpected server errors
 - Form components receive `errors` and `values` as props to repopulate on failure
+- Display `form?.serverError` as a red banner above form components for server errors
 - The `PatronForm.svelte` component is shared between create and edit
 - **Track submitting state** with `$state(false)` and toggle in `enhance` callback
 
 ## Prisma Schema Key Models
 ```
-Patron  → files: File[], checkouts: Checkout[]
-Tool    → files: File[], checkouts: Checkout[], category: Category
-File    → entityType, filePath, fileName, fileType, label, patronId?, toolId?
-User    → role: VOLUNTEER | ADMIN, active: boolean
-Checkout → patron, tool, volunteer (User), status: CHECKED_OUT | RETURNED | OVERDUE
+Patron      → files: File[], checkouts: Checkout[]
+Tool        → files: File[], checkouts: Checkout[], category: Category
+File        → entityType, filePath, fileName, fileType, label, patronId?, toolId?
+User        → role: VOLUNTEER | ADMIN, active: boolean
+Checkout    → patron, tool, volunteer (User), status: CHECKED_OUT | RETURNED | OVERDUE
+ActivityLog → action, userId (nullable, not FK), payload (JSON string), success, response (JSON string), createdAt
 ```
+
+## Activity Logging
+Use `logActivity` from `$lib/server/activityLog` for all critical operations. It **never throws** — failures only `console.error`.
+
+```typescript
+import { logActivity } from '$lib/server/activityLog'
+
+await logActivity({
+  action: 'CREATE_PATRON',  // CREATE_PATRON | EDIT_PATRON | CREATE_TOOL | EDIT_TOOL | CHECKOUT | CHECKIN
+  userId: locals.user.id,   // nullable — pass undefined if user may not exist
+  payload: { ... },         // the request data attempted
+  success: true,
+  response: { ... }         // result summary or error info
+})
+```
+
+**Important**: `userId` on `ActivityLog` is intentionally NOT a foreign key — logs survive user deletion.
 
 ## Environment Variables
 ```
@@ -141,6 +166,9 @@ BODY_SIZE_LIMIT       # 26214400 (25MB) — required for file uploads
 - Patron/Tool search APIs — typeahead used by checkout flow
 - `CameraCapture.svelte` — device camera photo capture component
 - Exploit path blocking — hooks block `.php`, `.git`, `wp-admin`, etc.
+- Activity logging — `ActivityLog` table records CREATE_PATRON, EDIT_PATRON, CREATE_TOOL, EDIT_TOOL, CHECKOUT, CHECKIN with success/failure and JSON payload; admin viewer at `/admin/activity-log`
+- Client-side server error banners — patron/tool create/edit pages show red banner on `form?.serverError`
+- Admin tab navigation — `/admin` has tab layout for Categories and Activity Log
 
 ### In Progress
 - Patron file uploads (branch: `patron-files`) — liability waiver + user agreement docs on patron create/edit; patron detail page already renders `files` array
@@ -160,5 +188,5 @@ BODY_SIZE_LIMIT       # 26214400 (25MB) — required for file uploads
 - Zip code format: `12345` or `12345-6789`
 - Phone validation: 10+ digits, various formats accepted
 - At least one of email/phone required for patrons
-- `createdBy` on Patron stores the user ID of the creating volunteer/admin
+- `createdBy` on Patron stores the user ID of the creating volunteer/admin — use `creator: { connect: { id } }` in Prisma create (relation syntax), not `createdBy: id` (scalar direct assignment is rejected by newer Prisma clients when a named relation exists)
 - Patron detail page already renders `files` array — no changes needed there for new uploads to appear

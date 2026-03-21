@@ -3,7 +3,7 @@
 > A tool lending library platform for staff volunteers and admins. Patrons sign liability waivers and user agreements, then borrow physical tools. Volunteers process checkouts, check-ins, and patron registration. Admins additionally manage tool categories. The system tracks borrowed items, overdue counts, damage reports, and scanned agreement documents per patron.
 
 **Current focus:** Patron file uploads — adding liability waiver and user agreement document attachment to patron create and edit flows (branch: `patron-files`)
-**Last updated:** 2026-03-18
+**Last updated:** 2026-03-20
 
 ---
 
@@ -28,7 +28,8 @@ src/
 ├── lib/
 │   ├── server/
 │   │   ├── fileService.ts  — Central file upload abstraction; always use this, never raw fs
-│   │   └── auth.ts         — In-memory session store, login/logout, bcrypt helpers
+│   │   ├── auth.ts         — In-memory session store, login/logout, bcrypt helpers
+│   │   └── activityLog.ts  — logActivity() helper; writes to ActivityLog table; never throws
 │   ├── prisma.ts           — Prisma singleton; import this everywhere, never instantiate directly
 │   ├── components/
 │   │   ├── PatronForm.svelte    — Shared between patron create and edit routes
@@ -48,7 +49,11 @@ src/
 │   ├── patrons/            — Patron list, create, detail, edit
 │   ├── tools/              — Tool list, create, detail, edit (includes photo upload)
 │   ├── checkout/           — Checkout flow: select patron + tool, set due date
-│   ├── admin/categories/   — Category hierarchy management (ADMIN role)
+│   ├── admin/
+│   │   ├── categories/         — Category hierarchy management (ADMIN role)
+│   │   ├── activity-log/       — Paginated activity log viewer (ADMIN role)
+│   │   ├── +layout.server.ts   — Auth guard for all admin routes (ADMIN only)
+│   │   └── +layout.svelte      — Tab nav: Categories | Activity Log
 │   ├── login/ logout/      — Auth pages
 │   └── api/
 │       ├── checkin/        — POST: process a tool check-in
@@ -125,6 +130,8 @@ No known bugs at time of last update.
 - File serving was previously behind authentication, which broke image rendering on pages loaded without a login redirect. Fixed by switching `GET /api/files/[id]` to rate-limited public access (`src/routes/api/files/[id]/+server.ts`).
 - Large file uploads caused a silent body parse failure until `BODY_SIZE_LIMIT=26214400` was added to `ecosystem.config.cjs`. If uploads stop working in production, check this env var first.
 - bcrypt had a platform-specific native build issue — see `BCRYPT_FIX.md` at the project root if bcrypt fails to load.
+- Patron creation failed in production with `PrismaClientValidationError: Unknown argument 'createdBy'` — caused by stale Prisma client built before the `creator` relation was defined on the schema. Fix: use `creator: { connect: { id: locals.user.id } }` instead of `createdBy: locals.user.id` in patron create. Requires `npx prisma generate` after schema changes.
+- Caddy cert provisioning failed on second domain due to a doubled hostname in DigitalOcean DNS A record (`lincolntoollibrary.org.lincolntoollibrary.org`). Fix: set A record hostname to `@` not the full domain.
 
 ---
 
