@@ -3,31 +3,77 @@
 	import '../app.css'
 
 	let { children, data } = $props()
+
+	let menuOpen = $state(false)
+
+	// Close menu on navigation
+	$effect(() => {
+		page.url.pathname
+		menuOpen = false
+	})
 </script>
 
 <div class="layout">
 	<nav>
-		<div class="nav-brand">
-			<a href="/">Near South Lincoln Tool Library</a>
+		<div class="nav-top">
+			<div class="nav-brand">
+				<a href="/">Near South Lincoln Tool Library</a>
+			</div>
+
+			{#if data?.user}
+				<button
+					class="hamburger"
+					onclick={() => menuOpen = !menuOpen}
+					aria-label="Toggle menu"
+					aria-expanded={menuOpen}
+				>
+					<span class="bar"></span>
+					<span class="bar"></span>
+					<span class="bar"></span>
+				</button>
+			{:else}
+				<a href="/login" class="logout-button">Login</a>
+			{/if}
 		</div>
+
 		{#if data?.user}
-			<div class="nav-links">
-				<a href="/" class:active={page.url.pathname === '/'}> Home </a>
-				<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
-				<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
-				<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
-				{#if data.user?.role === 'ADMIN'}
-					<a href="/admin/categories" class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
-				{/if}
+			<!-- Desktop layout -->
+			<div class="nav-desktop">
+				<div class="nav-links">
+					<a href="/" class:active={page.url.pathname === '/'}> Home </a>
+					<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
+					<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+					<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
+					{#if data.user?.role === 'ADMIN'}
+						<a href="/admin/categories" class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
+					{/if}
+				</div>
+				<div class="nav-user">
+					<span class="user-name">{data.user.name}</span>
+					<form method="POST" action="/logout" style="display: inline;">
+						<button type="submit" class="logout-button">Logout</button>
+					</form>
+				</div>
 			</div>
-			<div class="nav-user">
-				<span class="user-name">{data.user.name}</span>
-				<form method="POST" action="/logout" style="display: inline;">
-					<button type="submit" class="logout-button">Logout</button>
-				</form>
-			</div>
-		{:else}
-			<a href="/login" class="logout-button">Login</a>
+
+			<!-- Mobile dropdown -->
+			{#if menuOpen}
+				<div class="nav-mobile-menu">
+					<a href="/" class:active={page.url.pathname === '/'}> Home </a>
+					<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
+					<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+					<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
+					{#if data.user?.role === 'ADMIN'}
+						<a href="/admin/categories" class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
+					{/if}
+					<div class="mobile-menu-footer">
+						<span class="user-name">{data.user.name}</span>
+						<form method="POST" action="/logout" style="display: inline;">
+							<button type="submit" class="logout-button">Logout</button>
+						</form>
+					</div>
+				</div>
+			{/if}
 		{/if}
 	</nav>
 
@@ -47,13 +93,15 @@
 	nav {
 		background: #912924;
 		color: white;
-		padding: 1rem 2rem;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		position: relative;
+	}
+
+	.nav-top {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		flex-wrap: wrap;
-		gap: 0.5rem;
+		padding: 1rem 2rem;
 	}
 
 	.nav-brand a {
@@ -63,35 +111,17 @@
 		font-weight: 700;
 	}
 
+	/* Desktop: show links inline, hide hamburger */
+	.nav-desktop {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 2rem 0.75rem;
+	}
+
 	.nav-links {
 		display: flex;
 		gap: 2rem;
-	}
-
-	@media (max-width: 768px) {
-		nav {
-			padding: 0.75rem 1rem;
-		}
-
-		.nav-brand {
-			flex: 1;
-		}
-
-		.nav-links {
-			order: 3;
-			width: 100%;
-			gap: 0.25rem;
-			flex-wrap: wrap;
-		}
-
-		.nav-links a {
-			padding: 0.4rem 0.75rem;
-			font-size: 0.9rem;
-		}
-
-		.nav-user {
-			order: 2;
-		}
 	}
 
 	.nav-links a {
@@ -132,10 +162,78 @@
 		cursor: pointer;
 		font-weight: 500;
 		transition: background 0.2s;
+		text-decoration: none;
 	}
 
 	.logout-button:hover {
 		background: rgba(255, 255, 255, 0.3);
+	}
+
+	/* Hamburger button — hidden on desktop */
+	.hamburger {
+		display: none;
+		flex-direction: column;
+		justify-content: center;
+		gap: 5px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 4px;
+	}
+
+	.bar {
+		display: block;
+		width: 24px;
+		height: 2px;
+		background: white;
+		border-radius: 2px;
+	}
+
+	/* Mobile menu panel — hidden by default, shown via {#if} */
+	.nav-mobile-menu {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.nav-top {
+			padding: 0.75rem 1rem;
+		}
+
+		.nav-desktop {
+			display: none;
+		}
+
+		.hamburger {
+			display: flex;
+		}
+
+		.nav-mobile-menu {
+			display: flex;
+			flex-direction: column;
+			border-top: 1px solid rgba(255, 255, 255, 0.15);
+		}
+
+		.nav-mobile-menu a {
+			color: rgba(255, 255, 255, 0.9);
+			text-decoration: none;
+			font-weight: 500;
+			padding: 0.85rem 1.25rem;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+			transition: background 0.15s;
+		}
+
+		.nav-mobile-menu a:hover,
+		.nav-mobile-menu a.active {
+			background: rgba(255, 255, 255, 0.12);
+			color: white;
+		}
+
+		.mobile-menu-footer {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0.85rem 1.25rem;
+		}
 	}
 
 	.content {
