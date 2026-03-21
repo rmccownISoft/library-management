@@ -72,7 +72,7 @@
 
 	const flatCategoryOptions = $derived(flattenCategories(rootCategories, 0))
 
-	let viewMode = $state<'list' | 'grid'>('list')
+	let viewMode = $state<'list' | 'grid'>('grid')
 </script>
 
 <div class="lg:grid lg:grid-cols-[280px_1fr] min-h-screen">
