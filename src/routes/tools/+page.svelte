@@ -120,7 +120,7 @@
             </select>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
             <h1 class="text-3xl font-bold text-gray-900">
                 {selectedCategoryId === null ? 'All Tools' : getCategoryName(selectedCategoryId)}
             </h1>
