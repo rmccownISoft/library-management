@@ -1,5 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
+import { logActivity } from '$lib/server/activityLog'
 
 export const POST = async ({ request, locals }: RequestEvent) => {
 	try {
@@ -63,7 +64,15 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			})
 		}
 
-		return json({ 
+		await logActivity({
+			action: 'CHECKIN',
+			userId,
+			payload: { checkoutId, toolId: checkout.toolId, patronId: checkout.patronId },
+			success: true,
+			response: { wasOverdue: isOverdue }
+		})
+
+		return json({
 			success: true,
 			checkout: updatedCheckout,
 			message: `Successfully checked in ${checkout.tool.name}`,
@@ -72,6 +81,13 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	} catch (error) {
 		console.error('Check-in error:', error)
+		await logActivity({
+			action: 'CHECKIN',
+			userId: locals.user?.id,
+			payload: { checkoutId },
+			success: false,
+			response: { error: String(error) }
+		})
 		return json({ error: 'Internal server error' }, { status: 500 })
 	}
 }

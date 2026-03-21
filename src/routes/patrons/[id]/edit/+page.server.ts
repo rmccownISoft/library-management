@@ -3,6 +3,7 @@ import { redirect, fail, error } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
 import { EntityType } from '$generated/prisma/enums'
+import { logActivity } from '$lib/server/activityLog'
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// Redirect to login if not authenticated
@@ -136,38 +137,60 @@ export const actions: Actions = {
 		const userAgreementSigned = formData.get('userAgreementSigned') === 'on' || userAgreementFiles.length > 0
 
 		// Update patron
-		await prisma.patron.update({
-			where: { id: patronId },
-			data: {
-				firstName: firstName.trim(),
-				lastName: lastName.trim(),
-				email: email?.trim() || null,
-				phone: phone?.trim() || null,
-				mailingStreet: mailingStreet.trim(),
-				mailingCity: mailingCity.trim(),
-				mailingState: mailingState.trim(),
-				mailingZipcode: mailingZipcode.trim(),
-				liabilityWaiverSigned,
-				userAgreementSigned
-			}
-		})
-		
-		// Upload any new documents
-		if (liabilityWaiverFiles.length > 0) {
-			await writeMultipleFilesAndPrismaCreate(liabilityWaiverFiles, {
-				entityType: EntityType.PATRON,
-				entityId: patronId,
-				uploadedBy: locals.user.id,
-				label: 'Liability Waiver'
+		try {
+			await prisma.patron.update({
+				where: { id: patronId },
+				data: {
+					firstName: firstName.trim(),
+					lastName: lastName.trim(),
+					email: email?.trim() || null,
+					phone: phone?.trim() || null,
+					mailingStreet: mailingStreet.trim(),
+					mailingCity: mailingCity.trim(),
+					mailingState: mailingState.trim(),
+					mailingZipcode: mailingZipcode.trim(),
+					liabilityWaiverSigned,
+					userAgreementSigned
+				}
 			})
-		}
 
-		if (userAgreementFiles.length > 0) {
-			await writeMultipleFilesAndPrismaCreate(userAgreementFiles, {
-				entityType: EntityType.PATRON,
-				entityId: patronId,
-				uploadedBy: locals.user.id,
-				label: 'User Agreement'
+			if (liabilityWaiverFiles.length > 0) {
+				await writeMultipleFilesAndPrismaCreate(liabilityWaiverFiles, {
+					entityType: EntityType.PATRON,
+					entityId: patronId,
+					uploadedBy: locals.user.id,
+					label: 'Liability Waiver'
+				})
+			}
+
+			if (userAgreementFiles.length > 0) {
+				await writeMultipleFilesAndPrismaCreate(userAgreementFiles, {
+					entityType: EntityType.PATRON,
+					entityId: patronId,
+					uploadedBy: locals.user.id,
+					label: 'User Agreement'
+				})
+			}
+			await logActivity({
+				action: 'EDIT_PATRON',
+				userId: locals.user.id,
+				payload: { patronId, firstName, lastName, email, phone, mailingStreet, mailingCity, mailingState, mailingZipcode },
+				success: true,
+				response: { patronId }
+			})
+		} catch (e) {
+			console.error('Failed to update patron:', e)
+			await logActivity({
+				action: 'EDIT_PATRON',
+				userId: locals.user.id,
+				payload: { patronId, firstName, lastName, email, phone, mailingStreet, mailingCity, mailingState, mailingZipcode },
+				success: false,
+				response: { error: String(e) }
+			})
+			return fail(500, {
+				serverError: 'An unexpected error occurred while saving the patron. Please try again.',
+				errors: {},
+				values: { firstName, lastName, email, phone, mailingStreet, mailingCity, mailingState, mailingZipcode }
 			})
 		}
 

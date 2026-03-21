@@ -3,6 +3,7 @@ import prisma from '$lib/prisma'
 import { error, redirect, fail } from '@sveltejs/kit'
 import { ConditionStatus, EntityType } from '$generated/prisma/enums'
 import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
+import { logActivity } from '$lib/server/activityLog'
 
 
 export const load: PageServerLoad = async({ params, locals }) => {
@@ -112,29 +113,51 @@ export const actions: Actions = {
         }
         
         // Update tool
-        await prisma.tool.update({
-            where: { id: toolId },
-            data: {
-                name: name.trim(),
-                description: description?.trim() || '',
-                categoryId: parseInt(categoryId),
-                quantity: parseInt(quantity),
-                donor: donor?.trim() || null,
-                conditionStatus: parsedConditionStatus
+        try {
+            await prisma.tool.update({
+                where: { id: toolId },
+                data: {
+                    name: name.trim(),
+                    description: description?.trim() || '',
+                    categoryId: parseInt(categoryId),
+                    quantity: parseInt(quantity),
+                    donor: donor?.trim() || null,
+                    conditionStatus: parsedConditionStatus
+                }
+            })
+
+            if (files.length > 0) {
+                await writeMultipleFilesAndPrismaCreate(files, {
+                    entityType: EntityType.TOOL,
+                    entityId: toolId,
+                    uploadedBy: locals.user.id,
+                    label: 'Tool Photo'
+                })
             }
-        })
-        
-        // Save new files if any
-        if (files.length > 0) {
-            await writeMultipleFilesAndPrismaCreate(files, {
-                entityType: EntityType.TOOL,
-                entityId: toolId,
-                uploadedBy: locals.user.id,
-                label: 'Tool Photo'
+
+            await logActivity({
+                action: 'EDIT_TOOL',
+                userId: locals.user.id,
+                payload: { toolId, name, description, categoryId, quantity, donor, conditionStatus },
+                success: true,
+                response: { toolId }
+            })
+        } catch (e) {
+            console.error('Failed to update tool:', e)
+            await logActivity({
+                action: 'EDIT_TOOL',
+                userId: locals.user.id,
+                payload: { toolId, name, description, categoryId, quantity, donor, conditionStatus },
+                success: false,
+                response: { error: String(e) }
+            })
+            return fail(500, {
+                serverError: 'An unexpected error occurred while saving the tool. Please try again.',
+                errors: {},
+                values: { name, description, categoryId, quantity, donor, conditionStatus }
             })
         }
-        
-        // Redirect back to tool detail page
+
         throw redirect(303, `/tools/${toolId}`)
     }
 }

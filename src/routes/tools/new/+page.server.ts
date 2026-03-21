@@ -4,6 +4,7 @@ import prisma from '$lib/prisma'
 import { ConditionStatus } from '$generated/prisma/enums'
 import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
 import { EntityType } from '$generated/prisma/enums'
+import { logActivity } from '$lib/server/activityLog'
 
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -87,42 +88,55 @@ export const actions: Actions = {
 		}
 		
 		// Create tool
-		const tool = await prisma.tool.create({
-			data: {
-				name: name.trim(),
-				description: description?.trim() || '',
-				categoryId: parseInt(categoryId),
-				quantity: parseInt(quantity),
-				donor: donor?.trim() || null,
-				conditionStatus: parsedConditionStatus
-			}
-		})
-		console.log('tool saved? : ', tool)
-		// Save files to dir and add metadata to db 
-		if (files.length && files[0].size > 0) {
-			const fileResults = await writeMultipleFilesAndPrismaCreate(files, {
-				entityType: EntityType.TOOL,
-				entityId: tool.id,
-				uploadedBy: locals.user.id,
-				label: 'Tool Photo'
+		let tool
+		try {
+			tool = await prisma.tool.create({
+				data: {
+					name: name.trim(),
+					description: description?.trim() || '',
+					categoryId: parseInt(categoryId),
+					quantity: parseInt(quantity),
+					donor: donor?.trim() || null,
+					conditionStatus: parsedConditionStatus
+				}
 			})
-			
-			// Check for failed uploads and log them (non-blocking)
-			if (fileResults.failed.length > 0) {
-				console.error(`Failed to save ${fileResults.failed.length} file(s) for tool ${tool.id}`)
-				fileResults.failed.forEach(f => {
-					console.error(`  - ${f.file.name}: ${f.error.message}`)
+
+			if (files.length && files[0].size > 0) {
+				const fileResults = await writeMultipleFilesAndPrismaCreate(files, {
+					entityType: EntityType.TOOL,
+					entityId: tool.id,
+					uploadedBy: locals.user.id,
+					label: 'Tool Photo'
 				})
+
+				if (fileResults.failed.length > 0) {
+					console.error(`Failed to save ${fileResults.failed.length} file(s) for tool ${tool.id}`)
+				}
 			}
-			
-			// Log success summary
-			if (fileResults.successful.length > 0) {
-				console.log(`Successfully saved ${fileResults.successful.length} file(s) for tool ${tool.id}`)
-			}
+
+			await logActivity({
+				action: 'CREATE_TOOL',
+				userId: locals.user.id,
+				payload: { name, description, categoryId, quantity, donor, conditionStatus },
+				success: true,
+				response: { toolId: tool.id }
+			})
+		} catch (e) {
+			console.error('Failed to create tool:', e)
+			await logActivity({
+				action: 'CREATE_TOOL',
+				userId: locals.user.id,
+				payload: { name, description, categoryId, quantity, donor, conditionStatus },
+				success: false,
+				response: { error: String(e) }
+			})
+			return fail(500, {
+				serverError: 'An unexpected error occurred while saving the tool. Please try again.',
+				errors: {},
+				values: { name, description, categoryId, quantity, donor, conditionStatus }
+			})
 		}
 
-		
-		// Redirect to the new tool's detail page
 		throw redirect(303, `/tools/${tool.id}`)
 	}
 }

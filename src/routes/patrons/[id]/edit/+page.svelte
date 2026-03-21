@@ -36,6 +36,12 @@
 		</h1>
 	</div>
 
+	{#if form?.serverError}
+		<div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4 text-red-800">
+			{form.serverError}
+		</div>
+	{/if}
+
 	<!-- Patron Form -->
 	<PatronForm
 		{patron}
