@@ -230,6 +230,22 @@ enum EntityType {
 }
 
 // ============================================================================
+// ACTIVITY LOGGING
+// ============================================================================
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  action    String   // CREATE_PATRON, EDIT_PATRON, CREATE_TOOL, EDIT_TOOL, CHECKOUT, CHECKIN
+  userId    Int?     // Who performed the action (not a FK — log survives user deletion)
+  payload   String   // JSON of the request data attempted
+  success   Boolean
+  response  String?  // JSON of the error or result summary
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+// ============================================================================
 // AUDIT & LOGGING
 // ============================================================================
 
