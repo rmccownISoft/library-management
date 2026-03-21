@@ -83,7 +83,9 @@
         <h2 class="hidden lg:block text-xl font-semibold mb-4 text-gray-900">Categories</h2>
 
         <!-- Category list: always visible on desktop, toggled on mobile -->
-        <div class="lg:block {sidebarOpen ? 'block' : 'hidden'} mt-2 lg:mt-0">
+        <!-- Split into two elements to avoid Tailwind class conflicts -->
+        <!-- Desktop: always shown -->
+        <div class="hidden lg:block">
             <button
                 class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-gray-700 hover:bg-gray-200 {selectedCategoryId === null ? 'bg-blue-600 text-white font-medium hover:bg-blue-700' : ''}"
                 onclick={() => { selectedCategoryId = null; sidebarOpen = false }}
@@ -95,6 +97,22 @@
                 {@render categoryNode(category, 0)}
             {/each}
         </div>
+
+        <!-- Mobile: conditionally rendered via {#if} — no CSS conflict -->
+        {#if sidebarOpen}
+            <div class="lg:hidden mt-2">
+                <button
+                    class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-gray-700 hover:bg-gray-200 {selectedCategoryId === null ? 'bg-blue-600 text-white font-medium hover:bg-blue-700' : ''}"
+                    onclick={() => { selectedCategoryId = null; sidebarOpen = false }}
+                >
+                    All Tools ({data.tools.length})
+                </button>
+
+                {#each rootCategories as category (category.id)}
+                    {@render categoryNode(category, 0)}
+                {/each}
+            </div>
+        {/if}
     </aside>
 
     <!-- Tools Content -->
