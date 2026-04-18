@@ -9,7 +9,7 @@ A tool lending library management system for tracking patrons, tools, and checko
 - **Styling**: Tailwind CSS v4
 - **Database**: SQLite via Prisma ORM (client generated in `src/generated/prisma`)
 - **Package manager**: pnpm
-- **Deployment**: PM2 process manager, Node adapter
+- **Deployment**: PM2 process manager, Node adapter, Caddy reverse proxy
 
 ## Key Commands
 ```bash
@@ -140,6 +140,28 @@ await logActivity({
 ```
 
 **Important**: `userId` on `ActivityLog` is intentionally NOT a foreign key — logs survive user deletion.
+
+## Deployment (Production)
+
+**Reverse proxy**: Caddy (`pfbonnet.dev`), sitting in front of PM2/Node on port 3000.
+
+**Caddyfile** (`/etc/caddy/Caddyfile`) — must include `request_body` to allow large file uploads:
+```caddy
+pfbonnet.dev {
+    request_body {
+        max_size 25MB
+    }
+    reverse_proxy localhost:3000
+}
+```
+
+After editing: `sudo systemctl reload caddy`
+
+**File upload size limit is enforced at two layers**:
+1. Caddy: `max_size 25MB` in Caddyfile
+2. SvelteKit adapter-node: `BODY_SIZE_LIMIT=26214400` in `ecosystem.config.cjs`
+
+Both must be set. If uploads fail with 413, check Caddy first — it rejects before Node ever sees the request.
 
 ## Environment Variables
 ```
