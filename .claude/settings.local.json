@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_svelte_svelte__get-documentation"
+      "mcp__plugin_svelte_svelte__get-documentation",
+      "Read(//c/Users/kc0hw/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/**)",
+      "Bash(C:\\\\Users\\\\kc0hw\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.7\\\\scripts\\\\start-server.sh --project-dir \"c:/Users/kc0hw/Documents/GitHub/library-management\")"
     ]
   }
 }
