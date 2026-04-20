@@ -31,24 +31,24 @@
 
 
 <!-- How It Works Section -->
-<section class="py-16 px-6 bg-white">
+<section class="py-16 px-6 bg-gray-50">
 	<div class="max-w-5xl mx-auto">
 	 	<h2 class="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h2>
 
 	 	<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-	 		<div class="text-center">
+	 		<div class="bg-white rounded-xl p-8 shadow-sm text-center">
 	 			<div class="text-5xl mb-4">📋</div>
 	 			<h3 class="text-xl font-semibold text-gray-900 mb-2">1. Become a Member</h3>
 	 			<p class="text-gray-600">Sign a liability waiver and user agreement. Borrowing is free for Lincoln residents.</p>
 	 		</div>
-		  
-	 		<div class="text-center">
+
+	 		<div class="bg-white rounded-xl p-8 shadow-sm text-center">
 	 			<div class="text-5xl mb-4">🔧</div>
 	 			<h3 class="text-xl font-semibold text-gray-900 mb-2">2. Browse &amp; Borrow</h3>
 	 			<p class="text-gray-600">Browse our catalog online or visit during open hours to check out tools for up to two weeks.</p>
 	 		</div>
-		  
-	 		<div class="text-center">
+
+	 		<div class="bg-white rounded-xl p-8 shadow-sm text-center">
 	 		 	<div class="text-5xl mb-4">🏠</div>
 	 		 	<h3 class="text-xl font-semibold text-gray-900 mb-2">3. Return &amp; Repeat</h3>
 	 		 	<p class="text-gray-600">Return tools on time and in good condition so everyone in the community can use them.</p>
@@ -83,7 +83,7 @@
 </section>
 
 <!-- Featured Tools Section -->
-<section class="py-16 px-6 bg-white">
+<section class="py-16 px-6 bg-gray-50">
 	<div class="max-w-6xl mx-auto">
 		<div class="text-center mb-12">
 			<h2 class="text-3xl font-bold text-gray-900">Popular Tools</h2>
@@ -94,7 +94,7 @@
 	  
 		<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
 			{#each data.featuredTools as tool (tool.id)}
-				<div class="bg-gray-50 rounded-lg overflow-hidden">
+				<div class="bg-white rounded-lg overflow-hidden shadow-sm">
 					{#if tool.files.length > 0}
 						<img
 							src="/api/files/{tool.files[0].id}"
@@ -115,18 +115,56 @@
 	</div>
 </section>
 
-<!-- Contact & Support Section -->
-<section>
-	<p>Contact goes here</p>
+<!-- Get Involved Section -->
+<section class="py-16 px-6 bg-gray-50">
+	<div class="max-w-5xl mx-auto">
+		<h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Get Involved</h2>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+			<div class="bg-white rounded-xl p-8 shadow-sm">
+				<h3 class="text-xl font-semibold text-gray-900 mb-3">Tool Wish List</h3>
+				<p class="text-gray-600">
+					We're always looking to expand our inventory. Email us to see what tools our community needs most, or to suggest an addition.
+				</p>
+			</div>
+
+			<div class="bg-white rounded-xl p-8 shadow-sm">
+				<h3 class="text-xl font-semibold text-gray-900 mb-3">Donate a Tool</h3>
+				<p class="text-gray-600">
+					Have tools you no longer need? Donate them to the library so the whole community can benefit. Contact us to arrange a drop-off.
+				</p>
+			</div>
+
+			<div class="bg-white rounded-xl p-8 shadow-sm">
+				<h3 class="text-xl font-semibold text-gray-900 mb-3">Volunteer</h3>
+				<p class="text-gray-600">
+					We run on community energy. Whether you can help during open hours or behind the scenes, we'd love your support. Reach out to learn more.
+				</p>
+			</div>
+		</div>
+	</div>
 </section>
 
-<!-- Supporters Section -->
-<section class="bg-gray-50 py-10 border-t border-gray-200">
-	<div class="flex flex-col items-center gap-6">
-		<p class="text-sm font-semibold uppercase tracking-widest text-gray-400">Supported by</p>
-		<div class="flex items-center gap-10">
-			<img src="hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain"/>
-			<img src="nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain"/>
+<!-- Contact Section -->
+<section class="py-16 px-6 bg-[#912924] text-white">
+	<div class="max-w-5xl mx-auto">
+		<h2 class="text-3xl font-bold text-center mb-8">Contact Us</h2>
+		<div class="flex flex-col items-center gap-2 mb-16">
+			<p class="text-white/80">Questions? We'd love to hear from you.</p>
+			<a href="mailto:NSToolLibrary@gmail.com" class="text-white hover:text-white/80 underline">
+				NSToolLibrary@gmail.com
+			</a>
+			<a href="tel:4024131347" class="text-white hover:text-white/80 underline">
+				402-413-1347
+			</a>
+		</div>
+
+		<div class="border-t border-white/20 pt-10 flex flex-col items-center gap-6">
+			<p class="text-sm font-semibold uppercase tracking-widest text-white/50">Supported by</p>
+			<div class="flex items-center gap-10">
+				<img src="hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
+				<img src="nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
+			</div>
 		</div>
 	</div>
 </section>
