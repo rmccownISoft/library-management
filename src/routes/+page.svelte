@@ -29,20 +29,32 @@
 
 </section>
 
-<!-- Supporters Section -->
-<section class="bg-gray-50 py-10 border-t border-gray-200">
-	<div class="flex flex-col items-center gap-6">
-		<p class="text-sm font-semibold uppercase tracking-widest text-gray-400">Supported by</p>
-		<div class="flex items-center gap-10">
-			<img src="hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain"/>
-			<img src="nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain"/>
-		</div>
-	</div>
-</section>
 
 <!-- How It Works Section -->
-<section>
-	<p>How it works goes here</p>
+<section class="py-16 px-6 bg-white">
+	<div class="max-w-5xl mx-auto">
+	 	<h2 class="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h2>
+
+	 	<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+	 		<div class="text-center">
+	 			<div class="text-5xl mb-4">📋</div>
+	 			<h3 class="text-xl font-semibold text-gray-900 mb-2">1. Become a Member</h3>
+	 			<p class="text-gray-600">Sign a liability waiver and user agreement. Borrowing is free for Lincoln residents.</p>
+	 		</div>
+		  
+	 		<div class="text-center">
+	 			<div class="text-5xl mb-4">🔧</div>
+	 			<h3 class="text-xl font-semibold text-gray-900 mb-2">2. Browse &amp; Borrow</h3>
+	 			<p class="text-gray-600">Browse our catalog online or visit during open hours to check out tools for up to two weeks.</p>
+	 		</div>
+		  
+	 		<div class="text-center">
+	 		 	<div class="text-5xl mb-4">🏠</div>
+	 		 	<h3 class="text-xl font-semibold text-gray-900 mb-2">3. Return &amp; Repeat</h3>
+	 		 	<p class="text-gray-600">Return tools on time and in good condition so everyone in the community can use them.</p>
+	 		</div>
+	 	</div>
+	</div>
 </section>
 
 <!-- Hours & Location Section -->
@@ -63,4 +75,14 @@
 	<p>Contact goes here</p>
 </section>
 
+<!-- Supporters Section -->
+<section class="bg-gray-50 py-10 border-t border-gray-200">
+	<div class="flex flex-col items-center gap-6">
+		<p class="text-sm font-semibold uppercase tracking-widest text-gray-400">Supported by</p>
+		<div class="flex items-center gap-10">
+			<img src="hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain"/>
+			<img src="nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain"/>
+		</div>
+	</div>
+</section>
 
