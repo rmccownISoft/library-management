@@ -83,11 +83,36 @@
 </section>
 
 <!-- Featured Tools Section -->
-<section>
-	<p>Featured tools go here</p>
-	{#each data.featuredTools as tool (tool.id)}
-		<p>{tool.name}</p>
-	{/each}
+<section class="py-16 px-6 bg-white">
+	<div class="max-w-6xl mx-auto">
+		<div class="text-center mb-12">
+			<h2 class="text-3xl font-bold text-gray-900">Popular Tools</h2>
+			<a href="/browse" class="text-[#912924] font-semibold hover:underline text-sm mt-2 inline-block">
+				See all tools →
+			</a>
+		</div>
+	  
+		<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+			{#each data.featuredTools as tool (tool.id)}
+				<div class="bg-gray-50 rounded-lg overflow-hidden">
+					{#if tool.files.length > 0}
+						<img
+							src="/api/files/{tool.files[0].id}"
+							alt={tool.name}
+							class="w-full h-32 object-contain bg-white"
+						/>
+					{:else}
+						<div class="w-full h-32 bg-gray-200 flex items-center justify-center text-3xl">
+						  🔧
+						</div>
+					{/if}
+					<p class="p-2 text-sm font-medium text-gray-800 text-center leading-snug">
+						{tool.name}
+					</p>
+				</div>
+			{/each}
+		</div>
+	</div>
 </section>
 
 <!-- Contact & Support Section -->
