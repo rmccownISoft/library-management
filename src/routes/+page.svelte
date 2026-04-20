@@ -58,8 +58,28 @@
 </section>
 
 <!-- Hours & Location Section -->
-<section>
-	<p>Hours and location goes here</p>
+<section class="py-16 px-6 bg-gray-50">
+	<div class="max-w-5xl mx-auto">
+		<h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Visit Us</h2>
+		
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+			<div class="bg-white rounded-xl p-8 shadow-sm">
+				<h3 class="text-xl font-semibold text-gray-900 mb-4">Hours</h3>
+				<div class="grid grid-cols-2 gap-y-2 text-gray-700">
+					<span class="font-medium">Tuesdays</span><span>8:00 AM – 10:00 AM</span>
+					<span class="font-medium">Fridays</span><span>5:30 PM – 7:00 PM</span>
+					<span class="font-medium">Saturdays</span><span>10:00 AM – 2:00 PM</span>
+				</div>
+			</div>
+		  
+			<div class="bg-white rounded-xl p-8 shadow-sm">
+				<h3 class="text-xl font-semibold text-gray-900 mb-4">Location</h3>
+				<p class="text-gray-700 font-medium">2045 E Street</p>
+				<p class="text-gray-600">Basement of the <a href="https://www.firstplymouth.org/hopehouse" class="underline hover:text-gray-900 transition-colors" target="_blank" rel="noopener noreferrer">Hope House – First Plymouth</a></p>
+				<p class="text-gray-500 text-sm mt-2">Lincoln, Nebraska</p>
+			</div>
+		</div>
+	</div>
 </section>
 
 <!-- Featured Tools Section -->
