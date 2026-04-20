@@ -1,6 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types'
 	let { data }: { data: PageData } = $props()
+
+	function formatTime(t: string) {
+		return new Date('1970-01-01T' + t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+	}
 </script>
 
 <!-- Hero Section -->
@@ -66,9 +70,13 @@
 			<div class="bg-white rounded-xl p-8 shadow-sm">
 				<h3 class="text-xl font-semibold text-gray-900 mb-4">Hours</h3>
 				<div class="grid grid-cols-2 gap-y-2 text-gray-700">
-					<span class="font-medium">Tuesdays</span><span>8:00 AM – 10:00 AM</span>
-					<span class="font-medium">Fridays</span><span>5:30 PM – 7:00 PM</span>
-					<span class="font-medium">Saturdays</span><span>10:00 AM – 2:00 PM</span>
+					{#each data.hours.filter((h: { active: boolean }) => h.active) as h (h.day)}
+						<span class="font-medium">{h.day}s</span>
+						<span>{formatTime(h.open)} – {formatTime(h.close)}</span>
+					{/each}
+					{#if data.hours.filter((h: { active: boolean }) => h.active).length === 0}
+						<span class="col-span-2 text-gray-400 text-sm">Hours not yet configured.</span>
+					{/if}
 				</div>
 			</div>
 		  
