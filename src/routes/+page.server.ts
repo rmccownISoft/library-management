@@ -1,25 +1,41 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
 
-// We'll need to pick which photos we want to show
 export const load: PageServerLoad = async ({ locals }) => {
-  const featuredTools = await prisma.tool.findMany({
-    where: {
-      files: { some: {} }
-    },
-    include: {
-      files: {
-        take: 1,
-        orderBy: { id: 'asc' }
+    const frequentTools = await prisma.tool.findMany({
+      where: {
+        files: { some: {} },
+        checkouts: { some: {} }
       },
-      category: true
-    },
-    take: 6,
-    orderBy: { name: 'asc' }
-  })
+      include: {
+        files: { take: 1, orderBy: { id: 'asc' } },
+        category: true
+      },
+      orderBy: { checkouts: { _count: 'desc' } },
+      take: 6
+    })
 
-  return {
-    featuredTools,
-    user: locals.user
-  }
+    let featuredTools = frequentTools
+
+    if (frequentTools.length < 6) {
+      const seenIds = frequentTools.map(t => t.id)
+      const fallback = await prisma.tool.findMany({
+        where: {
+          files: { some: {} },
+          id: { notIn: seenIds }
+        },
+        include: {
+          files: { take: 1, orderBy: { id: 'asc' } },
+          category: true
+        },
+        take: 6 - frequentTools.length,
+        orderBy: { name: 'asc' }
+      })
+      featuredTools = [...frequentTools, ...fallback]
+    }
+
+    return {
+      featuredTools,
+      user: locals.user
+    }
 }
