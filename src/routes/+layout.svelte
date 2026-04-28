@@ -32,7 +32,10 @@
 					<span class="bar"></span>
 				</button>
 			{:else}
-				<a href="/login" class="logout-button">Login</a>
+				<div style="display: flex; gap: 0.75rem; align-items: center;">
+    				<a href="/browse" class="logout-button">Browse Tools</a>
+    				<a href="/login" class="logout-button">Login</a>
+  				</div>
 			{/if}
 		</div>
 

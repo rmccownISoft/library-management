@@ -10,7 +10,8 @@
 
 	const tabs = [
 		{ label: 'Categories', href: '/admin/categories' },
-		{ label: 'Activity Log', href: '/admin/activity-log' }
+		{ label: 'Activity Log', href: '/admin/activity-log' },
+		{ label: 'Config', href: '/admin/config' }
 	];
 </script>
 

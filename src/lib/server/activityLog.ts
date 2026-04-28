@@ -7,6 +7,7 @@ export type ActivityAction =
 	| 'EDIT_TOOL'
 	| 'CHECKOUT'
 	| 'CHECKIN'
+	| 'UPDATE_CONFIG'
 
 export async function logActivity({
 	action,

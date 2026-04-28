@@ -1,45 +1,40 @@
-import type { PageServerLoad } from './$types';
-import prisma from '$lib/prisma';
+import type { PageServerLoad } from './$types'
+import prisma from '$lib/prisma'
+import { parseHours, LIBRARY_HOURS_KEY } from '$lib/server/systemSettings'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	// Public page - fetch tools and categories for everyone
-	const [tools, categories] = await Promise.all([
+	const [frequentTools, hoursSetting] = await Promise.all([
 		prisma.tool.findMany({
+			where: { files: { some: {} }, checkouts: { some: {} } },
 			include: {
-				category: true,
-				files: {
-					take: 1,
-					orderBy: {
-						id: 'asc'
-					}
-				}
+				files: { take: 1, orderBy: { id: 'asc' } },
+				category: true
 			},
-			orderBy: {
-				name: 'asc'
-			}
+			orderBy: { checkouts: { _count: 'desc' } },
+			take: 6
 		}),
-		prisma.category.findMany({
+		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } })
+	])
+
+	let featuredTools = frequentTools
+
+	if (frequentTools.length < 6) {
+		const seenIds = frequentTools.map((t) => t.id)
+		const fallback = await prisma.tool.findMany({
+			where: { files: { some: {} }, id: { notIn: seenIds } },
 			include: {
-				children: {
-					include: {
-						_count: {
-							select: { tools: true }
-						}
-					}
-				},
-				_count: {
-					select: { tools: true }
-				}
+				files: { take: 1, orderBy: { id: 'asc' } },
+				category: true
 			},
-			orderBy: {
-				name: 'asc'
-			}
+			take: 6 - frequentTools.length,
+			orderBy: { name: 'asc' }
 		})
-	]);
+		featuredTools = [...frequentTools, ...fallback]
+	}
 
 	return {
-		tools,
-		categories,
-		user: locals.user // Pass user data for conditional rendering
-	};
-};
+		featuredTools,
+		hours: parseHours(hoursSetting?.value),
+		user: locals.user
+	}
+}
