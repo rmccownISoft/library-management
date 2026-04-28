@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types'
+	import type { HourRow } from '$lib/server/systemSettings'
 	import { enhance } from '$app/forms'
-
-	type HourRow = { day: string; open: string; close: string; active: boolean }
 
 	const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -41,7 +40,9 @@
 				submitting = true
 				return async ({ update }) => {
 					await update({ reset: false })
-					rows = data.hours.map((h: HourRow) => ({ ...h }))
+					if (form?.success) {
+						rows = data.hours.map((h: HourRow) => ({ ...h }))
+					}
 					submitting = false
 				}
 			}}
@@ -60,14 +61,14 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-100">
-						{#each rows as row, i}
+						{#each rows as row, i (i)}
 							<tr>
 								<td class="py-3 pr-4">
 									<select
 										bind:value={row.day}
 										class="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 									>
-										{#each DAYS as day}
+										{#each DAYS as day (day)}
 											<option value={day}>{day}</option>
 										{/each}
 									</select>

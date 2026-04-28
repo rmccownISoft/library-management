@@ -2,19 +2,11 @@ import type { PageServerLoad, Actions } from './$types'
 import { fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 import { logActivity } from '$lib/server/activityLog'
-
-type HourRow = { day: string; open: string; close: string; active: boolean }
-
-const DEFAULT_HOURS: HourRow[] = [
-	{ day: 'Tuesday', open: '08:00', close: '10:00', active: true },
-	{ day: 'Friday', open: '17:30', close: '19:00', active: true },
-	{ day: 'Saturday', open: '10:00', close: '14:00', active: true }
-]
+import { parseHours, DEFAULT_HOURS, LIBRARY_HOURS_KEY } from '$lib/server/systemSettings'
 
 export const load: PageServerLoad = async () => {
-	const setting = await prisma.systemSetting.findUnique({ where: { key: 'library_hours' } })
-	const hours: HourRow[] = setting ? JSON.parse(setting.value) : DEFAULT_HOURS
-	return { hours }
+	const setting = await prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } })
+	return { hours: parseHours(setting?.value, DEFAULT_HOURS) }
 }
 
 export const actions: Actions = {
@@ -22,23 +14,21 @@ export const actions: Actions = {
 		const formData = await request.formData()
 		const raw = formData.get('hours')
 
-		let hours: HourRow[]
-		try {
-			hours = JSON.parse(raw as string)
-		} catch {
+		const hours = parseHours(raw as string)
+		if (!Array.isArray(hours)) {
 			return fail(400, { serverError: 'Invalid hours data.' })
 		}
 
 		try {
 			await prisma.systemSetting.upsert({
-				where: { key: 'library_hours' },
-				create: { key: 'library_hours', value: JSON.stringify(hours) },
+				where: { key: LIBRARY_HOURS_KEY },
+				create: { key: LIBRARY_HOURS_KEY, value: JSON.stringify(hours) },
 				update: { value: JSON.stringify(hours) }
 			})
 			await logActivity({
 				action: 'UPDATE_CONFIG',
 				userId: locals.user?.id,
-				payload: { key: 'library_hours' },
+				payload: { key: LIBRARY_HOURS_KEY },
 				success: true,
 				response: { rowCount: hours.length }
 			})
@@ -47,7 +37,7 @@ export const actions: Actions = {
 			await logActivity({
 				action: 'UPDATE_CONFIG',
 				userId: locals.user?.id,
-				payload: { key: 'library_hours' },
+				payload: { key: LIBRARY_HOURS_KEY },
 				success: false,
 				response: { error: String(e) }
 			})
