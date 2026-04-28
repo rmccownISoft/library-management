@@ -1,7 +1,6 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
-
-type HourRow = { day: string; open: string; close: string; active: boolean }
+import { parseHours, LIBRARY_HOURS_KEY } from '$lib/server/systemSettings'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const [frequentTools, hoursSetting] = await Promise.all([
@@ -14,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			orderBy: { checkouts: { _count: 'desc' } },
 			take: 6
 		}),
-		prisma.systemSetting.findUnique({ where: { key: 'library_hours' } })
+		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } })
 	])
 
 	let featuredTools = frequentTools
@@ -33,7 +32,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		featuredTools = [...frequentTools, ...fallback]
 	}
 
-	const hours: HourRow[] = hoursSetting ? JSON.parse(hoursSetting.value) : []
-
-	return { featuredTools, hours, user: locals.user }
+	return {
+		featuredTools,
+		hours: parseHours(hoursSetting?.value),
+		user: locals.user
+	}
 }
