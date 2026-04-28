@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	])
 
 	const pinnedIds = parsePins(pinsSetting?.value)
-	const remainingSlots = 6 - pinnedIds.length
+	const requestedSlots = 6 - pinnedIds.length
 
 	const [pinnedTools, frequentTools] = await Promise.all([
 		pinnedIds.length > 0
@@ -32,24 +32,25 @@ export const load: PageServerLoad = async ({ locals }) => {
 				category: true
 			},
 			orderBy: { checkouts: { _count: 'desc' } },
-			take: remainingSlots
+			take: requestedSlots
 		})
 	])
 
-	let algorithmTools = frequentTools
+	const actualSlots = 6 - pinnedTools.length
+	let algorithmTools = frequentTools.slice(0, actualSlots)
 
-	if (frequentTools.length < remainingSlots) {
-		const seenIds = [...pinnedIds, ...frequentTools.map((t) => t.id)]
+	if (algorithmTools.length < actualSlots) {
+		const seenIds = [...pinnedIds, ...algorithmTools.map((t) => t.id)]
 		const fallback = await prisma.tool.findMany({
 			where: { files: { some: {} }, id: { notIn: seenIds } },
 			include: {
 				files: { take: 1, orderBy: { id: 'asc' } },
 				category: true
 			},
-			take: remainingSlots - frequentTools.length,
+			take: actualSlots - algorithmTools.length,
 			orderBy: { dateAdded: 'desc' }
 		})
-		algorithmTools = [...frequentTools, ...fallback]
+		algorithmTools = [...algorithmTools, ...fallback]
 	}
 
 	return {
