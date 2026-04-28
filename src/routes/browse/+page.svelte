@@ -3,42 +3,43 @@
 
 	let { data }: { data: PageData } = $props();
 
+	type CategoryNode = {
+		id: number
+		name: string
+		parentId: number | null
+		_count: { tools: number }
+		children?: CategoryNode[]
+	}
+
 	// Selected category state (null means "All Tools")
 	let selectedCategoryId = $state<number | null>(null);
-	let selectedImage = $state<{ id: string; fileName: string } | null>(null);
+	let selectedImage = $state<{ id: number; fileName: string } | null>(null);
 
 	// Build category hierarchy (root categories only)
-	const rootCategories = $derived(data.categories.filter((cat) => !cat.parentId));
+	const rootCategories = $derived(data.categories.filter((cat) => !cat.parentId) as CategoryNode[]);
 
 	// Filter tools by selected category
 	const filteredTools = $derived(() => {
 		if (selectedCategoryId === null) {
 			return data.tools;
 		}
-
-		// Get selected category and all its descendants
 		const categoryIds = getCategoryAndDescendants(selectedCategoryId);
 		return data.tools.filter((tool) => categoryIds.includes(tool.categoryId));
 	});
 
-	// Get category and all its descendants recursively
 	function getCategoryAndDescendants(categoryId: number): number[] {
 		const ids = [categoryId];
-		const category = data.categories.find((c) => c.id === categoryId);
-
+		const category = data.categories.find((c) => c.id === categoryId) as CategoryNode | undefined;
 		if (category?.children) {
 			for (const child of category.children) {
 				ids.push(...getCategoryAndDescendants(child.id));
 			}
 		}
-
 		return ids;
 	}
 
-	// Group tools by category
 	const toolsByCategory = $derived(() => {
 		const grouped = new Map<number, typeof data.tools>();
-
 		for (const tool of filteredTools()) {
 			const categoryId = tool.categoryId;
 			if (!grouped.has(categoryId)) {
@@ -46,19 +47,16 @@
 			}
 			grouped.get(categoryId)?.push(tool);
 		}
-
 		return grouped;
 	});
 
-	// Get category name by id
 	function getCategoryName(categoryId: number): string {
 		return data.categories.find((c) => c.id === categoryId)?.name || 'Unknown';
 	}
 
-	// Flat options list for mobile select dropdown
 	type FlatOption = { id: number; label: string }
 
-	function flattenCategories(cats: typeof data.categories, depth: number): FlatOption[] {
+	function flattenCategories(cats: CategoryNode[], depth: number): FlatOption[] {
 		const result: FlatOption[] = []
 		for (const cat of cats) {
 			const prefix = '\u00A0\u00A0'.repeat(depth)
@@ -73,6 +71,10 @@
 	const flatCategoryOptions = $derived(flattenCategories(rootCategories, 0))
 
 	let viewMode = $state<'list' | 'grid'>('grid')
+
+	function formatTime(t: string) {
+		return new Date('1970-01-01T' + t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+	}
 </script>
 
 <div class="lg:grid lg:grid-cols-[280px_1fr] min-h-screen">
@@ -92,7 +94,7 @@
 			All Tools ({data.tools.length})
 		</button>
 
-		{#each rootCategories as category}
+		{#each rootCategories as category (category.id)}
 			{@render categoryNode(category, 0)}
 		{/each}
 	</aside>
@@ -133,8 +135,12 @@
 			<div class="pb-4 sm:pb-0 sm:pr-6">
 				<h2 class="text-lg font-semibold text-gray-900 mb-2">Hours</h2>
 				<div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-700">
-					<span>Friday</span><span>5:30 PM – 7:00 PM</span>
-					<span>Saturday</span><span>11:00 AM – 1:00 PM</span>
+					{#each data.hours.filter((h: { active: boolean }) => h.active) as h, i (i)}
+						<span>{h.day}s</span><span>{formatTime(h.open)} – {formatTime(h.close)}</span>
+					{/each}
+					{#if data.hours.filter((h: { active: boolean }) => h.active).length === 0}
+						<span class="col-span-2 text-gray-400">Hours not yet configured.</span>
+					{/if}
 				</div>
 			</div>
 			<div class="py-4 sm:py-0 sm:px-6">
@@ -286,9 +292,14 @@
 
 <!-- Image Lightbox Modal -->
 {#if selectedImage}
-	<div 
+	<div
+		role="dialog"
+		aria-modal="true"
+		aria-label="Tool image"
+		tabindex="-1"
 		class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
-		onclick={() => selectedImage = null}
+		onclick={(e) => e.target === e.currentTarget && (selectedImage = null)}
+		onkeydown={(e) => e.key === 'Escape' && (selectedImage = null)}
 	>
 		<button
 			type="button"
@@ -298,16 +309,15 @@
 		>
 			&times;
 		</button>
-		<img 
-			src="/api/files/{selectedImage.id}" 
+		<img
+			src="/api/files/{selectedImage.id}"
 			alt={selectedImage.fileName}
 			class="max-w-full max-h-full object-contain"
-			onclick={(e) => e.stopPropagation()}
 		/>
 	</div>
 {/if}
 
-{#snippet categoryNode(category: typeof data.categories[0], level: number)}
+{#snippet categoryNode(category: CategoryNode, level: number)}
 	<div style="padding-left: {level * 1.25}rem">
 		<button
 			class="w-full text-left px-3 py-2 my-1 rounded transition-colors text-sm text-gray-700 hover:bg-gray-200 {selectedCategoryId ===
@@ -320,8 +330,8 @@
 		</button>
 
 		{#if category.children && category.children.length > 0}
-			{#each category.children as child}
-				{@render categoryNode(child, level + 1)}
+			{#each category.children as child (child.id)}
+				{@render categoryNode(child as CategoryNode, level + 1)}
 			{/each}
 		{/if}
 	</div>
