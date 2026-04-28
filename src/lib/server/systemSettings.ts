@@ -31,3 +31,17 @@ export function parseHours(value: string | null | undefined, fallback: HourRow[]
 		return fallback
 	}
 }
+
+export const FEATURED_PINS_KEY = 'featured_tool_pins'
+
+export function parsePins(value: string | null | undefined): number[] {
+	if (!value) return []
+	try {
+		const parsed = JSON.parse(value)
+		if (!Array.isArray(parsed)) return []
+		const ids = parsed.filter((v): v is number => typeof v === 'number' && Number.isInteger(v))
+		return [...new Set(ids)].slice(0, 6)
+	} catch {
+		return []
+	}
+}
