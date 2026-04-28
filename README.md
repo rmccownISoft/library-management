@@ -523,8 +523,14 @@ pnpm exec prisma generate      # Generate client
 
 ## Manual sqlite
 
+**Dev:**
 ```bash
 sqlite3 ./prisma/data/library.db
+```
+
+**Production:**
+```bash
+sqlite3 /root/library-management/prisma/data/library.db
 ```
 
 Makes results readable
@@ -537,6 +543,27 @@ Makes results readable
 
 ```sql
 SELECT * FROM files;
+```
+
+**Featured tools query (most checked-out with photo, then newest fallback):**
+
+```sql
+-- Step 1: checked-out tools (up to 6)
+SELECT t.id, t.name, t.dateAdded, COUNT(c.id) AS checkout_count
+FROM tools t
+JOIN checkouts c ON c.toolId = t.id
+WHERE EXISTS (SELECT 1 FROM files f WHERE f.toolId = t.id)
+GROUP BY t.id
+ORDER BY checkout_count DESC
+LIMIT 6;
+
+-- Step 2: recently-added backfill (paste IDs from step 1 into NOT IN)
+SELECT t.id, t.name, t.dateAdded
+FROM tools t
+WHERE EXISTS (SELECT 1 FROM files f WHERE f.toolId = t.id)
+  AND t.id NOT IN (/* comma-separated IDs from step 1 */)
+ORDER BY t.dateAdded DESC
+LIMIT 6;
 ```
 
 ## Development Status
