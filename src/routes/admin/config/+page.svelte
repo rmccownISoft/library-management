@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types'
 	import type { HourRow } from '$lib/server/systemSettings'
+	import { MAX_FEATURED_PINS } from '$lib/constants'
 	import { onDestroy } from 'svelte'
 	import { enhance } from '$app/forms'
 
@@ -24,7 +25,8 @@
 	let pinnedTools = $state<{ id: number; name: string }[]>(data.pinnedTools.map((t) => ({ ...t })))
 	let pinsSubmitting = $state(false)
 	let searchQuery = $state('')
-	let searchResults = $state<{ id: number; name: string }[]>([])
+	type SearchResult = { id: number; name: string; category: { name: string } | null }
+	let searchResults = $state<SearchResult[]>([])
 
 	let debounceTimer: ReturnType<typeof setTimeout>
 	onDestroy(() => clearTimeout(debounceTimer))
@@ -40,7 +42,7 @@
 				const res = await fetch(`/api/tools/search?search=${encodeURIComponent(query)}`)
 				const json = await res.json()
 				const pinnedIds = pinnedTools.map((t) => t.id)
-				searchResults = (json.tools as { id: number; name: string }[])
+				searchResults = (json.tools as SearchResult[])
 					.filter((t) => !pinnedIds.includes(t.id))
 					.slice(0, 8)
 			} catch {
@@ -49,9 +51,8 @@
 		}, 250)
 	}
 
-	// Max pins must match MAX_FEATURED_PINS in $lib/server/systemSettings.ts
 	function addPin(tool: { id: number; name: string }) {
-		if (pinnedTools.length >= 6) return
+		if (pinnedTools.length >= MAX_FEATURED_PINS) return
 		if (pinnedTools.some((t) => t.id === tool.id)) return
 		pinnedTools.push({ id: tool.id, name: tool.name })
 		searchQuery = ''
@@ -234,7 +235,7 @@
 				</div>
 			{/if}
 
-			{#if pinnedTools.length < 6}
+			{#if pinnedTools.length < MAX_FEATURED_PINS}
 				<div class="relative mb-6">
 					<input
 						type="text"
@@ -261,7 +262,7 @@
 										onclick={() => addPin(result)}
 										class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
 									>
-										{result.name}
+										{result.name}{#if result.category} · <span class="text-gray-400">{result.category.name}</span>{/if}
 									</button>
 								</li>
 							{/each}

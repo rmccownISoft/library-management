@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
 import { parseHours, LIBRARY_HOURS_KEY, parsePins, FEATURED_PINS_KEY } from '$lib/server/systemSettings'
+import { MAX_FEATURED_PINS } from '$lib/constants'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const [hoursSetting, pinsSetting] = await Promise.all([
@@ -9,9 +10,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	])
 
 	const pinnedIds = parsePins(pinsSetting?.value)
-	const requestedSlots = 6 - pinnedIds.length
+	const requestedSlots = MAX_FEATURED_PINS - pinnedIds.length
 
-	const [pinnedTools, frequentTools] = await Promise.all([
+	const [rawPinnedTools, frequentTools] = await Promise.all([
 		pinnedIds.length > 0
 			? prisma.tool.findMany({
 					where: { id: { in: pinnedIds } },
@@ -36,7 +37,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})
 	])
 
-	const actualSlots = 6 - pinnedTools.length
+	// Restore admin-configured order — DB does not preserve `in` array order
+	const pinnedById = new Map(rawPinnedTools.map((t) => [t.id, t]))
+	type PinnedTool = (typeof rawPinnedTools)[number]
+	const pinnedTools = pinnedIds
+		.map((id) => pinnedById.get(id))
+		.filter((t): t is PinnedTool => t !== undefined)
+
+	const actualSlots = MAX_FEATURED_PINS - pinnedTools.length
 	let algorithmTools = frequentTools.slice(0, actualSlots)
 
 	if (algorithmTools.length < actualSlots) {

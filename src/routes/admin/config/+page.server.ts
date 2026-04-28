@@ -17,13 +17,17 @@ export const load: PageServerLoad = async () => {
 	])
 
 	const pinnedIds = parsePins(pinsSetting?.value)
-	const pinnedTools =
+	const rawPinnedTools =
 		pinnedIds.length > 0
 			? await prisma.tool.findMany({
 					where: { id: { in: pinnedIds } },
 					select: { id: true, name: true }
 				})
 			: []
+	const pinnedById = new Map(rawPinnedTools.map((t) => [t.id, t]))
+	const pinnedTools = pinnedIds
+		.map((id) => pinnedById.get(id))
+		.filter((t): t is { id: number; name: string } => t !== undefined)
 
 	return {
 		hours: parseHours(hoursSetting?.value, DEFAULT_HOURS),
