@@ -7,6 +7,7 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props()
 
+	// --- Hours state ---
 	let rows = $state<HourRow[]>(data.hours.map((h: HourRow) => ({ ...h })))
 	let submitting = $state(false)
 
@@ -17,9 +18,53 @@
 	function removeRow(i: number) {
 		rows.splice(i, 1)
 	}
+
+	// --- Pins state ---
+	let pinnedTools = $state<{ id: number; name: string }[]>(data.pinnedTools.map((t) => ({ ...t })))
+	let pinsSubmitting = $state(false)
+	let searchQuery = $state('')
+	let searchResults = $state<{ id: number; name: string }[]>([])
+
+	let debounceTimer: ReturnType<typeof setTimeout>
+
+	async function handleSearch(query: string) {
+		clearTimeout(debounceTimer)
+		if (!query.trim()) {
+			searchResults = []
+			return
+		}
+		debounceTimer = setTimeout(async () => {
+			const res = await fetch(`/api/tools/search?search=${encodeURIComponent(query)}`)
+			const json = await res.json()
+			const pinnedIds = pinnedTools.map((t) => t.id)
+			searchResults = (json.tools as { id: number; name: string }[])
+				.filter((t) => !pinnedIds.includes(t.id))
+				.slice(0, 8)
+		}, 250)
+	}
+
+	function addPin(tool: { id: number; name: string }) {
+		if (pinnedTools.length >= 6) return
+		if (pinnedTools.some((t) => t.id === tool.id)) return
+		pinnedTools.push({ id: tool.id, name: tool.name })
+		searchQuery = ''
+		searchResults = []
+	}
+
+	function removePin(id: number) {
+		const idx = pinnedTools.findIndex((t) => t.id === id)
+		if (idx !== -1) pinnedTools.splice(idx, 1)
+	}
+
+	function handleBlur() {
+		setTimeout(() => {
+			searchResults = []
+		}, 150)
+	}
 </script>
 
 <div class="space-y-6">
+	<!-- Library Hours -->
 	<div class="bg-white rounded-xl shadow-sm p-8">
 		<h2 class="text-xl font-semibold text-gray-900 mb-6">Library Hours</h2>
 
@@ -123,6 +168,103 @@
 					class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
 				>
 					{submitting ? 'Saving…' : 'Save'}
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Featured Tools -->
+	<div class="bg-white rounded-xl shadow-sm p-8">
+		<h2 class="text-xl font-semibold text-gray-900 mb-2">Featured Tools</h2>
+		<p class="text-sm text-gray-500 mb-6">
+			Pinned tools always appear first in the "Popular Tools" section on the homepage. Remaining
+			slots fill automatically by checkout frequency.
+		</p>
+
+		{#if form?.pinsServerError}
+			<div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+				{form.pinsServerError}
+			</div>
+		{/if}
+		{#if form?.pinsSuccess}
+			<div class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm">
+				Featured tools saved successfully.
+			</div>
+		{/if}
+
+		<form
+			method="POST"
+			action="?/savePins"
+			use:enhance={() => {
+				pinsSubmitting = true
+				return async ({ update }) => {
+					await update({ reset: false })
+					if (form?.pinsSuccess) {
+						pinnedTools = data.pinnedTools.map((t) => ({ ...t }))
+					}
+					pinsSubmitting = false
+				}
+			}}
+		>
+			<input type="hidden" name="pins" value={JSON.stringify(pinnedTools.map((t) => t.id))} />
+
+			{#if pinnedTools.length > 0}
+				<div class="flex flex-wrap gap-2 mb-4">
+					{#each pinnedTools as tool (tool.id)}
+						<span
+							class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 text-sm font-medium px-3 py-1.5 rounded-full"
+						>
+							{tool.name}
+							<button
+								type="button"
+								onclick={() => removePin(tool.id)}
+								class="text-blue-400 hover:text-blue-700 leading-none"
+								aria-label="Remove {tool.name}"
+							>×</button>
+						</span>
+					{/each}
+				</div>
+			{/if}
+
+			{#if pinnedTools.length < 6}
+				<div class="relative mb-6">
+					<input
+						type="text"
+						bind:value={searchQuery}
+						oninput={() => handleSearch(searchQuery)}
+						onblur={handleBlur}
+						placeholder="Search for a tool to pin…"
+						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+					{#if searchResults.length > 0}
+						<ul
+							class="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+						>
+							{#each searchResults as result (result.id)}
+								<li>
+									<button
+										type="button"
+										onclick={() => addPin(result)}
+										class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+									>
+										{result.name}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+			{:else}
+				<p class="text-sm text-gray-400 mb-6">Maximum 6 tools pinned.</p>
+			{/if}
+
+			<div class="flex justify-end">
+				<button
+					type="submit"
+					disabled={pinsSubmitting}
+					class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+				>
+					{pinsSubmitting ? 'Saving…' : 'Save'}
 				</button>
 			</div>
 		</form>
