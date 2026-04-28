@@ -69,7 +69,10 @@ export const actions: Actions = {
 
 	savePins: async ({ request, locals }) => {
 		const formData = await request.formData()
-		const raw = formData.get('pins') as string
+		const raw = formData.get('pins')
+		if (typeof raw !== 'string') {
+			return fail(400, { pinsServerError: 'Missing pins data.' })
+		}
 		const pins = parsePins(raw)
 
 		try {
