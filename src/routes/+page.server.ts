@@ -1,39 +1,59 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
-import { parseHours, LIBRARY_HOURS_KEY } from '$lib/server/systemSettings'
+import { parseHours, LIBRARY_HOURS_KEY, parsePins, FEATURED_PINS_KEY } from '$lib/server/systemSettings'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const [frequentTools, hoursSetting] = await Promise.all([
+	const [hoursSetting, pinsSetting] = await Promise.all([
+		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } }),
+		prisma.systemSetting.findUnique({ where: { key: FEATURED_PINS_KEY } })
+	])
+
+	const pinnedIds = parsePins(pinsSetting?.value)
+	const remainingSlots = 6 - pinnedIds.length
+
+	const [pinnedTools, frequentTools] = await Promise.all([
+		pinnedIds.length > 0
+			? prisma.tool.findMany({
+					where: { id: { in: pinnedIds } },
+					include: {
+						files: { take: 1, orderBy: { id: 'asc' } },
+						category: true
+					}
+				})
+			: Promise.resolve([]),
 		prisma.tool.findMany({
-			where: { files: { some: {} }, checkouts: { some: {} } },
+			where: {
+				files: { some: {} },
+				checkouts: { some: {} },
+				id: { notIn: pinnedIds }
+			},
 			include: {
 				files: { take: 1, orderBy: { id: 'asc' } },
 				category: true
 			},
 			orderBy: { checkouts: { _count: 'desc' } },
-			take: 6
-		}),
-		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } })
+			take: remainingSlots
+		})
 	])
 
-	let featuredTools = frequentTools
+	let algorithmTools = frequentTools
 
-	if (frequentTools.length < 6) {
-		const seenIds = frequentTools.map((t) => t.id)
+	if (frequentTools.length < remainingSlots) {
+		const seenIds = [...pinnedIds, ...frequentTools.map((t) => t.id)]
 		const fallback = await prisma.tool.findMany({
 			where: { files: { some: {} }, id: { notIn: seenIds } },
 			include: {
 				files: { take: 1, orderBy: { id: 'asc' } },
 				category: true
 			},
-			take: 6 - frequentTools.length,
-			orderBy: { name: 'asc' }
+			take: remainingSlots - frequentTools.length,
+			orderBy: { dateAdded: 'desc' }
 		})
-		featuredTools = [...frequentTools, ...fallback]
+		algorithmTools = [...frequentTools, ...fallback]
 	}
 
 	return {
-		featuredTools,
+		featuredTools: [...pinnedTools, ...algorithmTools],
 		hours: parseHours(hoursSetting?.value),
 		user: locals.user
 	}
