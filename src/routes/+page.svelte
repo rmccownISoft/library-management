@@ -3,7 +3,7 @@
 	let { data }: { data: PageData } = $props()
 
 	function formatTime(t: string) {
-		return new Date('1970-01-01T' + t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+		return new Date('1970-01-01T' + t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 	}
 </script>
 
@@ -18,7 +18,7 @@
 	<div class="absolute inset-0 bg-black/60"></div>
 	<!-- Content sits above the overlay via z-10-->
 	<div class="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16">
-		<img src="library_logo.jpg" alt="Near South Tool Library logo" class="w-24 h-24 object-contain mb-6"/>
+		<img src="/library_logo.jpg" alt="Near South Tool Library logo" class="w-24 h-24 object-contain mb-6"/>
 		<h1 class="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
 			Near South Lincoln <br /> Tool Library
 		</h1>
@@ -27,7 +27,7 @@
 		</p>
 		<a
 			href="/browse"
-			class="px-8 py-4 bg-[#912924] text-white text-log font-semibold rounded-lg hover:bg-[#7a1f1b] transition-colors"
+			class="px-8 py-4 bg-[#912924] text-white text-lg font-semibold rounded-lg hover:bg-[#7a1f1b] transition-colors"
 		>Browse Our Tools</a>
 	</div>
 
@@ -70,7 +70,7 @@
 			<div class="bg-white rounded-xl p-8 shadow-sm">
 				<h3 class="text-xl font-semibold text-gray-900 mb-4">Hours</h3>
 				<div class="grid grid-cols-2 gap-y-2 text-gray-700">
-					{#each data.hours.filter((h: { active: boolean }) => h.active) as h (h.day)}
+					{#each data.hours.filter((h: { active: boolean }) => h.active) as h, i (i)}
 						<span class="font-medium">{h.day}s</span>
 						<span>{formatTime(h.open)} – {formatTime(h.close)}</span>
 					{/each}
@@ -132,21 +132,21 @@
 			<div class="bg-white rounded-xl p-8 shadow-sm">
 				<h3 class="text-xl font-semibold text-gray-900 mb-3">Tool Wish List</h3>
 				<p class="text-gray-600">
-					We're always looking to expand our inventory. Email us to see what tools our community needs most, or to suggest an addition.
+					We're always looking to expand our inventory. Email us to see what tools our community needs most or to suggest an addition.
 				</p>
 			</div>
 
 			<div class="bg-white rounded-xl p-8 shadow-sm">
 				<h3 class="text-xl font-semibold text-gray-900 mb-3">Donate a Tool</h3>
 				<p class="text-gray-600">
-					Have tools you no longer need? Donate them to the library so the whole community can benefit. Contact us to arrange a drop-off.
+					Have tools you'd like to donate? Stop by the Tool Library during open hours or <a href="https://bit.ly/NSToolDonation" class="text-blue-600 underline hover:text-blue-800">fill out this form.</a>
 				</p>
 			</div>
 
 			<div class="bg-white rounded-xl p-8 shadow-sm">
 				<h3 class="text-xl font-semibold text-gray-900 mb-3">Volunteer</h3>
 				<p class="text-gray-600">
-					We run on community energy. Whether you can help during open hours or behind the scenes, we'd love your support. Reach out to learn more.
+					We run entirely by volunteers.  If you're interested in helping out, <a href="https://bit.ly/NSToolLibrary" class="text-blue-600 underline hover:text-blue-800">Fill out this quick form.</a>
 				</p>
 			</div>
 		</div>
@@ -170,8 +170,8 @@
 		<div class="border-t border-white/20 pt-10 flex flex-col items-center gap-6">
 			<p class="text-sm font-semibold uppercase tracking-widest text-white/50">Supported by</p>
 			<div class="flex items-center gap-10">
-				<img src="hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
-				<img src="nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
+				<img src="/hope_logo.png" alt="Hope House logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
+				<img src="/nwl_logo.png" alt="NeighborWorks Lincoln logo" class="h-16 w-auto object-contain bg-white/90 rounded-xl p-2"/>
 			</div>
 		</div>
 	</div>
