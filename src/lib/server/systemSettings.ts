@@ -32,7 +32,8 @@ export function parseHours(value: string | null | undefined, fallback: HourRow[]
 	}
 }
 
-export const MAX_FEATURED_PINS = 6
+import { MAX_FEATURED_PINS } from '$lib/constants'
+export { MAX_FEATURED_PINS }
 
 export const FEATURED_PINS_KEY = 'featured_tool_pins'
 
