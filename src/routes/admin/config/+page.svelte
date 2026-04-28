@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types'
 	import type { HourRow } from '$lib/server/systemSettings'
+	import { onDestroy } from 'svelte'
 	import { enhance } from '$app/forms'
 
 	const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -26,6 +27,7 @@
 	let searchResults = $state<{ id: number; name: string }[]>([])
 
 	let debounceTimer: ReturnType<typeof setTimeout>
+	onDestroy(() => clearTimeout(debounceTimer))
 
 	async function handleSearch(query: string) {
 		clearTimeout(debounceTimer)
@@ -34,12 +36,16 @@
 			return
 		}
 		debounceTimer = setTimeout(async () => {
-			const res = await fetch(`/api/tools/search?search=${encodeURIComponent(query)}`)
-			const json = await res.json()
-			const pinnedIds = pinnedTools.map((t) => t.id)
-			searchResults = (json.tools as { id: number; name: string }[])
-				.filter((t) => !pinnedIds.includes(t.id))
-				.slice(0, 8)
+			try {
+				const res = await fetch(`/api/tools/search?search=${encodeURIComponent(query)}`)
+				const json = await res.json()
+				const pinnedIds = pinnedTools.map((t) => t.id)
+				searchResults = (json.tools as { id: number; name: string }[])
+					.filter((t) => !pinnedIds.includes(t.id))
+					.slice(0, 8)
+			} catch {
+				searchResults = []
+			}
 		}, 250)
 	}
 
@@ -234,14 +240,20 @@
 						oninput={() => handleSearch(searchQuery)}
 						onblur={handleBlur}
 						placeholder="Search for a tool to pin…"
+						role="combobox"
+						aria-expanded={searchResults.length > 0}
+						aria-autocomplete="list"
+						aria-controls="pin-search-results"
 						class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 					/>
 					{#if searchResults.length > 0}
 						<ul
+							id="pin-search-results"
+							role="listbox"
 							class="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
 						>
 							{#each searchResults as result (result.id)}
-								<li>
+								<li role="option" aria-selected="false">
 									<button
 										type="button"
 										onclick={() => addPin(result)}
