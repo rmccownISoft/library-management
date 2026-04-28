@@ -49,6 +49,7 @@
 		}, 250)
 	}
 
+	// Max pins must match MAX_FEATURED_PINS in $lib/server/systemSettings.ts
 	function addPin(tool: { id: number; name: string }) {
 		if (pinnedTools.length >= 6) return
 		if (pinnedTools.some((t) => t.id === tool.id)) return
