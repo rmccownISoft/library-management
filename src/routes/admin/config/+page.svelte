@@ -88,6 +88,7 @@
 
 		<form
 			method="POST"
+			action="?/saveHours"
 			use:enhance={() => {
 				submitting = true
 				return async ({ update }) => {

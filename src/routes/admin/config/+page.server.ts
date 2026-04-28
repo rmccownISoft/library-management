@@ -32,7 +32,7 @@ export const load: PageServerLoad = async () => {
 }
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
+	saveHours: async ({ request, locals }) => {
 		const formData = await request.formData()
 		const raw = formData.get('hours')
 
