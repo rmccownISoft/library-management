@@ -25,6 +25,12 @@ export const GET: RequestHandler = async ({ url, locals }) => {
             },
             include: {
                 category: true,
+                files: {
+                    take: 1,
+                    orderBy: {
+                        id: 'asc'
+                    }
+                },
                 checkouts: {
                     where: {
                         status: 'CHECKED_OUT'

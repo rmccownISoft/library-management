@@ -13,6 +13,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
         const tools = await prisma.tool.findMany({
             include: {
                 category: true,
+                files: {
+                    take: 1,
+                    orderBy: {
+                        id: 'asc'
+                    }
+                },
                 checkouts: {
                     where: {
                         status: 'CHECKED_OUT'
