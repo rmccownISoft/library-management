@@ -2,9 +2,14 @@ import type { PageServerLoad } from './$types';
 import prisma from '$lib/prisma';
 import { parseHours, LIBRARY_HOURS_KEY } from '$lib/server/systemSettings';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const searchQuery = url.searchParams.get('search') || '';
+
 	const [tools, categories, hoursSetting] = await Promise.all([
 		prisma.tool.findMany({
+			where: searchQuery ? {
+				name: { contains: searchQuery }
+			} : undefined,
 			include: {
 				category: true,
 				files: {
@@ -37,6 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		tools,
 		categories,
 		hours: parseHours(hoursSetting?.value),
-		user: locals.user
+		user: locals.user,
+		searchQuery
 	};
 };
