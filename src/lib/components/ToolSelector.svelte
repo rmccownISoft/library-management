@@ -1,14 +1,14 @@
 <script lang="ts">
-    import type { ToolModel, CategoryModel } from '../../generated/prisma/models'
+    import type { ToolModel, CategoryModel, FileModel } from '../../generated/prisma/models'
     import Button from '$lib/components/Button.svelte'
 
-    let { 
-        tools, 
+    let {
+        tools,
         categories,
         onAddTool,
         selectedTools
     }: {
-        tools: (ToolModel & { category: CategoryModel, availableCount: number, checkedOutCount: number, soonestDueDate: Date | null })[];
+        tools: (ToolModel & { category: CategoryModel, files: FileModel[], availableCount: number, checkedOutCount: number, soonestDueDate: Date | null })[];
         categories: (CategoryModel & { children?: CategoryModel[] })[];
         onAddTool: (tool: ToolModel & { category: CategoryModel }) => void;
         selectedTools: (ToolModel & { category: CategoryModel })[];
@@ -19,6 +19,9 @@
     let selectedCategoryId = $state<number | null>(null)
     let searchResults = $state<typeof tools>([])
     let hasSearched = $state(false)
+
+    // Image lightbox state
+    let selectedImage = $state<{ id: number; fileName: string } | null>(null)
 
     // Helper function to get all descendant category IDs
     function getCategoryAndDescendants(categoryId: number): number[] {
@@ -148,6 +151,19 @@
                 {#each filteredTools as tool (tool.id)}
                     <div class="bg-white border border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-start">
+                            {#if tool.files && tool.files.length > 0}
+                                <button
+                                    type="button"
+                                    onclick={() => selectedImage = tool.files[0]}
+                                    class="flex-shrink-0 mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                                >
+                                    <img
+                                        src="/api/files/{tool.files[0].id}"
+                                        alt={tool.name}
+                                        class="w-16 h-16 object-contain rounded border border-gray-200 hover:opacity-90 transition-opacity cursor-pointer"
+                                    />
+                                </button>
+                            {/if}
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-2">
                                     <h3 class="font-medium text-gray-900">{tool.name}</h3>
@@ -206,3 +222,26 @@
         {/if}
     </div>
 </div>
+
+<!-- Image Lightbox Modal -->
+{#if selectedImage}
+    <div
+        class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+        onclick={() => selectedImage = null}
+    >
+        <button
+            type="button"
+            onclick={() => selectedImage = null}
+            class="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl font-light leading-none"
+            aria-label="Close"
+        >
+            &times;
+        </button>
+        <img
+            src="/api/files/{selectedImage.id}"
+            alt={selectedImage.fileName}
+            class="max-w-full max-h-full object-contain"
+            onclick={(e) => e.stopPropagation()}
+        />
+    </div>
+{/if}
