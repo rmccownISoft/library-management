@@ -4,16 +4,20 @@ import prisma from '$lib/prisma'
 import { logActivity } from '$lib/server/activityLog'
 import {
 	parseHours,
+	sortHours,
 	DEFAULT_HOURS,
 	LIBRARY_HOURS_KEY,
 	parsePins,
-	FEATURED_PINS_KEY
+	FEATURED_PINS_KEY,
+	parseClosures,
+	LIBRARY_CLOSURES_KEY
 } from '$lib/server/systemSettings'
 
 export const load: PageServerLoad = async () => {
-	const [hoursSetting, pinsSetting] = await Promise.all([
+	const [hoursSetting, pinsSetting, closuresSetting] = await Promise.all([
 		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } }),
-		prisma.systemSetting.findUnique({ where: { key: FEATURED_PINS_KEY } })
+		prisma.systemSetting.findUnique({ where: { key: FEATURED_PINS_KEY } }),
+		prisma.systemSetting.findUnique({ where: { key: LIBRARY_CLOSURES_KEY } })
 	])
 
 	const pinnedIds = parsePins(pinsSetting?.value)
@@ -31,7 +35,8 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		hours: parseHours(hoursSetting?.value, DEFAULT_HOURS),
-		pinnedTools
+		pinnedTools,
+		closures: parseClosures(closuresSetting?.value)
 	}
 }
 
@@ -40,7 +45,7 @@ export const actions: Actions = {
 		const formData = await request.formData()
 		const raw = formData.get('hours')
 
-		const hours = parseHours(raw as string)
+		const hours = sortHours(parseHours(raw as string))
 		if (!Array.isArray(hours)) {
 			return fail(400, { serverError: 'Invalid hours data.' })
 		}
@@ -68,6 +73,38 @@ export const actions: Actions = {
 				response: { error: String(e) }
 			})
 			return fail(500, { serverError: 'Failed to save hours.' })
+		}
+	},
+
+	saveClosures: async ({ request, locals }) => {
+		const formData = await request.formData()
+		const raw = formData.get('closures')
+
+		const closures = parseClosures(raw as string)
+
+		try {
+			await prisma.systemSetting.upsert({
+				where: { key: LIBRARY_CLOSURES_KEY },
+				create: { key: LIBRARY_CLOSURES_KEY, value: JSON.stringify(closures) },
+				update: { value: JSON.stringify(closures) }
+			})
+			await logActivity({
+				action: 'UPDATE_CONFIG',
+				userId: locals.user?.id,
+				payload: { key: LIBRARY_CLOSURES_KEY },
+				success: true,
+				response: { rowCount: closures.length }
+			})
+			return { closuresSuccess: true }
+		} catch (e) {
+			await logActivity({
+				action: 'UPDATE_CONFIG',
+				userId: locals.user?.id,
+				payload: { key: LIBRARY_CLOSURES_KEY },
+				success: false,
+				response: { error: String(e) }
+			})
+			return fail(500, { closuresServerError: 'Failed to save closures.' })
 		}
 	},
 

@@ -21,14 +21,49 @@ function isValidHourRow(row: unknown): row is HourRow {
 	)
 }
 
+export function sortHours<T extends { day: string; open: string }>(rows: T[]): T[] {
+	return rows.slice().sort((a, b) => {
+		const da = DAYS.indexOf(a.day)
+		const db = DAYS.indexOf(b.day)
+		if (da !== db) return da - db
+		return a.open.localeCompare(b.open)
+	})
+}
+
 export function parseHours(value: string | null | undefined, fallback: HourRow[] = []): HourRow[] {
 	if (!value) return fallback
 	try {
 		const parsed = JSON.parse(value)
 		if (!Array.isArray(parsed)) return fallback
-		return parsed.filter(isValidHourRow)
+		return sortHours(parsed.filter(isValidHourRow))
 	} catch {
 		return fallback
+	}
+}
+
+export type ClosureRow = { date: string; note: string }
+
+export const LIBRARY_CLOSURES_KEY = 'library_closures'
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function isValidClosureRow(row: unknown): row is ClosureRow {
+	if (typeof row !== 'object' || row === null) return false
+	const r = row as Record<string, unknown>
+	return typeof r.date === 'string' && DATE_RE.test(r.date) && typeof r.note === 'string'
+}
+
+export function parseClosures(value: string | null | undefined): ClosureRow[] {
+	if (!value) return []
+	try {
+		const parsed = JSON.parse(value)
+		if (!Array.isArray(parsed)) return []
+		return parsed
+			.filter(isValidClosureRow)
+			.map((c) => ({ date: c.date, note: c.note.trim() }))
+			.sort((a, b) => a.date.localeCompare(b.date))
+	} catch {
+		return []
 	}
 }
 

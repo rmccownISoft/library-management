@@ -1,12 +1,20 @@
 import type { PageServerLoad } from './$types'
 import prisma from '$lib/prisma'
-import { parseHours, LIBRARY_HOURS_KEY, parsePins, FEATURED_PINS_KEY } from '$lib/server/systemSettings'
+import {
+	parseHours,
+	LIBRARY_HOURS_KEY,
+	parsePins,
+	FEATURED_PINS_KEY,
+	parseClosures,
+	LIBRARY_CLOSURES_KEY
+} from '$lib/server/systemSettings'
 import { MAX_FEATURED_PINS } from '$lib/constants'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const [hoursSetting, pinsSetting] = await Promise.all([
+	const [hoursSetting, pinsSetting, closuresSetting] = await Promise.all([
 		prisma.systemSetting.findUnique({ where: { key: LIBRARY_HOURS_KEY } }),
-		prisma.systemSetting.findUnique({ where: { key: FEATURED_PINS_KEY } })
+		prisma.systemSetting.findUnique({ where: { key: FEATURED_PINS_KEY } }),
+		prisma.systemSetting.findUnique({ where: { key: LIBRARY_CLOSURES_KEY } })
 	])
 
 	const pinnedIds = parsePins(pinsSetting?.value)
@@ -61,9 +69,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 		algorithmTools = [...algorithmTools, ...fallback]
 	}
 
+	const today = new Date()
+	const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+	const upcomingClosures = parseClosures(closuresSetting?.value).filter((c) => c.date >= todayISO)
+
 	return {
 		featuredTools: [...pinnedTools, ...algorithmTools],
 		hours: parseHours(hoursSetting?.value),
+		closures: upcomingClosures,
 		user: locals.user
 	}
 }

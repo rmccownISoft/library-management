@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types'
-	import type { HourRow } from '$lib/server/systemSettings'
+	import type { HourRow, ClosureRow } from '$lib/server/systemSettings'
 	import { MAX_FEATURED_PINS } from '$lib/constants'
 	import { onDestroy } from 'svelte'
 	import { enhance } from '$app/forms'
@@ -10,15 +10,68 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props()
 
 	// --- Hours state ---
-	let rows = $state<HourRow[]>(data.hours.map((h: HourRow) => ({ ...h })))
+	type HourRowWithKey = HourRow & { _key: number }
+	let nextHourKey = data.hours.length
+	let rows = $state<HourRowWithKey[]>(
+		data.hours.map((h: HourRow, i: number) => ({ ...h, _key: i }))
+	)
 	let submitting = $state(false)
 
+	const sortedRows = $derived(
+		rows.slice().sort((a, b) => {
+			const da = DAYS.indexOf(a.day)
+			const db = DAYS.indexOf(b.day)
+			if (da !== db) return da - db
+			return a.open.localeCompare(b.open)
+		})
+	)
+
 	function addRow() {
-		rows.push({ day: 'Monday', open: '09:00', close: '17:00', active: true })
+		rows.push({ day: 'Monday', open: '09:00', close: '17:00', active: true, _key: nextHourKey++ })
 	}
 
-	function removeRow(i: number) {
-		rows.splice(i, 1)
+	function removeRow(key: number) {
+		const idx = rows.findIndex((r) => r._key === key)
+		if (idx !== -1) rows.splice(idx, 1)
+	}
+
+	// --- Closures state ---
+	type ClosureRowWithKey = ClosureRow & { _key: number }
+	let nextClosureKey = data.closures.length
+	let closures = $state<ClosureRowWithKey[]>(
+		data.closures.map((c: ClosureRow, i: number) => ({ ...c, _key: i }))
+	)
+	let closuresSubmitting = $state(false)
+
+	const sortedClosures = $derived(
+		closures.slice().sort((a, b) => a.date.localeCompare(b.date))
+	)
+
+	function todayISO() {
+		const d = new Date()
+		const y = d.getFullYear()
+		const m = String(d.getMonth() + 1).padStart(2, '0')
+		const day = String(d.getDate()).padStart(2, '0')
+		return `${y}-${m}-${day}`
+	}
+
+	function addClosure() {
+		closures.push({ date: todayISO(), note: '', _key: nextClosureKey++ })
+	}
+
+	function removeClosure(key: number) {
+		const idx = closures.findIndex((c) => c._key === key)
+		if (idx !== -1) closures.splice(idx, 1)
+	}
+
+	function formatClosureDate(date: string) {
+		const [y, m, d] = date.split('-').map(Number)
+		return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		})
 	}
 
 	// --- Pins state ---
@@ -95,13 +148,13 @@
 				return async ({ update }) => {
 					await update({ reset: false })
 					if (form?.success) {
-						rows = data.hours.map((h: HourRow) => ({ ...h }))
+						rows = data.hours.map((h: HourRow) => ({ ...h, _key: nextHourKey++ }))
 					}
 					submitting = false
 				}
 			}}
 		>
-			<input type="hidden" name="hours" value={JSON.stringify(rows)} />
+			<input type="hidden" name="hours" value={JSON.stringify(sortedRows)} />
 
 			<div class="overflow-x-auto mb-6">
 				<table class="w-full text-sm">
@@ -115,7 +168,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-100">
-						{#each rows as row, i (i)}
+						{#each sortedRows as row (row._key)}
 							<tr>
 								<td class="py-3 pr-4">
 									<select
@@ -151,7 +204,7 @@
 								<td class="py-3">
 									<button
 										type="button"
-										onclick={() => removeRow(i)}
+										onclick={() => removeRow(row._key)}
 										class="text-red-500 hover:text-red-700 text-sm font-medium transition-colors"
 									>
 										Remove
@@ -177,6 +230,114 @@
 					class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
 				>
 					{submitting ? 'Saving…' : 'Save'}
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Closures -->
+	<div class="bg-white rounded-xl shadow-sm p-8">
+		<h2 class="text-xl font-semibold text-gray-900 mb-2">Closures</h2>
+		<p class="text-sm text-gray-500 mb-6">
+			One-off closed days (holidays, emergency closures). Past closures stop showing on the homepage
+			automatically.
+		</p>
+
+		{#if form?.closuresServerError}
+			<div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+				{form.closuresServerError}
+			</div>
+		{/if}
+		{#if form?.closuresSuccess}
+			<div class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm">
+				Closures saved successfully.
+			</div>
+		{/if}
+
+		<form
+			method="POST"
+			action="?/saveClosures"
+			use:enhance={() => {
+				closuresSubmitting = true
+				return async ({ update }) => {
+					await update({ reset: false })
+					if (form?.closuresSuccess) {
+						closures = data.closures.map((c: ClosureRow) => ({
+							...c,
+							_key: nextClosureKey++
+						}))
+					}
+					closuresSubmitting = false
+				}
+			}}
+		>
+			<input
+				type="hidden"
+				name="closures"
+				value={JSON.stringify(sortedClosures.map((c) => ({ date: c.date, note: c.note })))}
+			/>
+
+			{#if sortedClosures.length > 0}
+				<div class="overflow-x-auto mb-6">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="text-left text-gray-500 border-b border-gray-200">
+								<th class="pb-3 pr-4 font-medium">Date</th>
+								<th class="pb-3 pr-4 font-medium">Note</th>
+								<th class="pb-3"></th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							{#each sortedClosures as closure (closure._key)}
+								<tr>
+									<td class="py-3 pr-4 align-top whitespace-nowrap">
+										<input
+											type="date"
+											bind:value={closure.date}
+											class="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+										<div class="text-xs text-gray-400 mt-1">{formatClosureDate(closure.date)}</div>
+									</td>
+									<td class="py-3 pr-4 w-full">
+										<input
+											type="text"
+											bind:value={closure.note}
+											placeholder="Christmas, snow day, etc. (optional)"
+											class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</td>
+									<td class="py-3 align-top">
+										<button
+											type="button"
+											onclick={() => removeClosure(closure._key)}
+											class="text-red-500 hover:text-red-700 text-sm font-medium transition-colors"
+										>
+											Remove
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<p class="text-sm text-gray-400 mb-6">No closures scheduled.</p>
+			{/if}
+
+			<div class="flex items-center justify-between">
+				<button
+					type="button"
+					onclick={addClosure}
+					class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+				>
+					+ Add Closure
+				</button>
+				<button
+					type="submit"
+					disabled={closuresSubmitting}
+					class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+				>
+					{closuresSubmitting ? 'Saving…' : 'Save'}
 				</button>
 			</div>
 		</form>

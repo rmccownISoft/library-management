@@ -5,6 +5,15 @@
 	function formatTime(t: string) {
 		return new Date('1970-01-01T' + t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 	}
+
+	function formatClosureDate(date: string) {
+		const [y, m, d] = date.split('-').map(Number)
+		return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric'
+		})
+	}
 </script>
 
 <!-- Hero Section -->
@@ -78,6 +87,19 @@
 						<span class="col-span-2 text-gray-400 text-sm">Hours not yet configured.</span>
 					{/if}
 				</div>
+
+				{#if data.closures.length > 0}
+					<div class="mt-6 pt-6 border-t border-gray-100">
+						<h4 class="text-sm font-semibold text-gray-900 mb-2">Upcoming Closures</h4>
+						<ul class="space-y-1 text-sm text-gray-700">
+							{#each data.closures as c (c.date + c.note)}
+								<li>
+									<span class="font-medium">{formatClosureDate(c.date)}</span>{#if c.note} — <span class="text-gray-600">{c.note}</span>{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
 			</div>
 		  
 			<div class="bg-white rounded-xl p-8 shadow-sm">
