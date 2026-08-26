@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
-import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
+import { writeMultipleFilesAndPrismaCreate, summarizeFileFailures } from '$lib/server/fileService'
 import { EntityType } from '$generated/prisma/enums'
 import { logActivity } from '$lib/server/activityLog'
 
@@ -23,7 +23,19 @@ export const actions: Actions = {
 			throw redirect(303, '/login')
 		}
 		
-		const formData = await request.formData()
+		let formData: FormData
+		try {
+			formData = await request.formData()
+		} catch (e) {
+			// Thrown when the request body exceeds BODY_SIZE_LIMIT before the
+			// action ever runs — surface a friendly message instead of a raw 500.
+			console.error('Failed to parse form data (body too large?):', e)
+			return fail(413, {
+				serverError: 'The files you selected are too large to upload. The maximum total upload size is 25 MB. Please use smaller or fewer files and try again.',
+				errors: {},
+				values: {}
+			})
+		}
 
 		// Extract files before other form data
 		const liabilityWaiverFiles = (formData.getAll('liabilityWaiver') as File[]).filter(f => f.size > 0)
@@ -111,12 +123,14 @@ export const actions: Actions = {
 			})
 		}
 		
-		// Resolve signed flags before creating — file upload auto-signs
-		const liabilityWaiverSigned = formData.get('liabilityWaiverSigned') === 'on' || liabilityWaiverFiles.length > 0
-		const userAgreementSigned = formData.get('userAgreementSigned') === 'on' || userAgreementFiles.length > 0
+		// A checkbox alone signs; a file signs only if it actually uploads
+		// successfully (resolved after upload below).
+		const liabilityCheckbox = formData.get('liabilityWaiverSigned') === 'on'
+		const agreementCheckbox = formData.get('userAgreementSigned') === 'on'
 
 		// Create patron
 		let patron
+		let fileFailures: Array<{ file: File; error: Error }> = []
 		try {
 			patron = await prisma.patron.create({
 				data: {
@@ -129,35 +143,64 @@ export const actions: Actions = {
 					mailingState: mailingState.trim(),
 					mailingZipcode: mailingZipcode.trim(),
 					creator: { connect: { id: locals.user.id } },
-					liabilityWaiverSigned,
-					userAgreementSigned
+					liabilityWaiverSigned: liabilityCheckbox,
+					userAgreementSigned: agreementCheckbox
 				}
 			})
 
+			let waiverUploaded = 0
+			let agreementUploaded = 0
+
 			if (liabilityWaiverFiles.length > 0) {
-				await writeMultipleFilesAndPrismaCreate(liabilityWaiverFiles, {
+				const r = await writeMultipleFilesAndPrismaCreate(liabilityWaiverFiles, {
 					entityType: EntityType.PATRON,
 					entityId: patron.id,
 					uploadedBy: locals.user.id,
 					label: 'Liability Waiver'
 				})
+				waiverUploaded = r.successful.length
+				fileFailures.push(...r.failed)
 			}
 
 			if (userAgreementFiles.length > 0) {
-				await writeMultipleFilesAndPrismaCreate(userAgreementFiles, {
+				const r = await writeMultipleFilesAndPrismaCreate(userAgreementFiles, {
 					entityType: EntityType.PATRON,
 					entityId: patron.id,
 					uploadedBy: locals.user.id,
 					label: 'User Agreement'
 				})
+				agreementUploaded = r.successful.length
+				fileFailures.push(...r.failed)
 			}
+
+			// Auto-sign only when a document actually made it to storage, so a
+			// failed upload can never leave a patron marked as signed.
+			const liabilityWaiverSigned = liabilityCheckbox || waiverUploaded > 0
+			const userAgreementSigned = agreementCheckbox || agreementUploaded > 0
+			if (liabilityWaiverSigned !== liabilityCheckbox || userAgreementSigned !== agreementCheckbox) {
+				await prisma.patron.update({
+					where: { id: patron.id },
+					data: { liabilityWaiverSigned, userAgreementSigned }
+				})
+			}
+
 			await logActivity({
 				action: 'CREATE_PATRON',
 				userId: locals.user.id,
 				payload: { firstName, lastName, email, phone, mailingStreet, mailingCity, mailingState, mailingZipcode },
 				success: true,
-				response: { patronId: patron.id }
+				response: { patronId: patron.id, filesUploaded: waiverUploaded + agreementUploaded, filesFailed: fileFailures.length }
 			})
+
+			if (fileFailures.length > 0) {
+				await logActivity({
+					action: 'FILE_UPLOAD_FAILED',
+					userId: locals.user.id,
+					payload: { entityType: 'PATRON', entityId: patron.id, fileNames: fileFailures.map(f => f.file.name) },
+					success: false,
+					response: { failures: fileFailures.map(f => ({ name: f.file.name, error: f.error.message })) }
+				})
+			}
 		} catch (e) {
 			console.error('Failed to create patron:', e)
 			await logActivity({
@@ -172,6 +215,11 @@ export const actions: Actions = {
 				errors: {},
 				values: { firstName, lastName, email, phone, mailingStreet, mailingCity, mailingState, mailingZipcode }
 			})
+		}
+
+		if (fileFailures.length > 0) {
+			const msg = `Patron saved, but ${fileFailures.length} file(s) could not be uploaded — ${summarizeFileFailures(fileFailures)}`
+			throw redirect(303, `/patrons/${patron.id}?fileWarning=${encodeURIComponent(msg)}`)
 		}
 
 		throw redirect(303, `/patrons/${patron.id}`)

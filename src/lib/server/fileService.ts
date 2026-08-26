@@ -284,6 +284,22 @@ export async function writeMultipleFilesAndPrismaCreate(
 }
 
 /**
+ * Builds a human-readable, single-line summary of failed file uploads,
+ * suitable for showing to the user or recording in the activity log.
+ *
+ * @example
+ * summarizeFileFailures(result.failed)
+ * // => 'waiver.pdf: Unable to save file: ENOSPC; photo.heic: Database error while saving file'
+ */
+export function summarizeFileFailures(
+	failed: Array<{ file: File; error: Error }>
+): string {
+	return failed
+		.map(({ file, error }) => `${file.name}: ${error.message}`)
+		.join('; ');
+}
+
+/**
  * Writes files and returns their database IDs (useful for relating to other records)
  * Throws an error if any file fails to upload
  * 

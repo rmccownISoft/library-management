@@ -8,6 +8,7 @@ export type ActivityAction =
 	| 'CHECKOUT'
 	| 'CHECKIN'
 	| 'UPDATE_CONFIG'
+	| 'FILE_UPLOAD_FAILED'
 
 export async function logActivity({
 	action,

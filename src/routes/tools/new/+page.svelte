@@ -14,7 +14,13 @@
 		<h1 class="text-3xl font-bold text-gray-900">Create New Tool</h1>
 	</div>
 
-	<ToolForm 
+	{#if form?.serverError}
+		<div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4 text-red-800">
+			{form.serverError}
+		</div>
+	{/if}
+
+	<ToolForm
 		categories={data.categories}
 		tool={null}
 		errors={form?.errors}

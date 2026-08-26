@@ -2,8 +2,10 @@
 	import type { PageData } from './$types'
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte'
 	import { invalidateAll } from '$app/navigation'
+	import { page } from '$app/state'
 
 	let { data } = $props<{ data: PageData }>()
+	const fileWarning = $derived(page.url.searchParams.get('fileWarning'))
 
 	// Check-in modal state
 	let showCheckinModal = $state(false)
@@ -122,6 +124,12 @@
 </svelte:head>
 
 <div class="max-w-4xl mx-auto p-8">
+	{#if fileWarning}
+		<div class="mb-6 rounded-md bg-amber-50 border border-amber-200 p-4 text-amber-800">
+			{fileWarning}
+		</div>
+	{/if}
+
 	<!-- Success Message -->
 	{#if checkinSuccess}
 		<div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">

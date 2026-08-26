@@ -1,8 +1,10 @@
 <script lang="ts">
     import type { PageData } from './$types'
     import { enhance } from '$app/forms'
+    import { page } from '$app/state'
 
     let { data } = $props<{ data: PageData }>();
+	const fileWarning = $derived(page.url.searchParams.get('fileWarning'));
 	let showDeleteConfirm = $state(false);
 	let isDeleting = $state(false);
 	let selectedImage = $state<{ id: number; fileName: string } | null>(null);
@@ -31,6 +33,12 @@
 </script>
 
 <div class="max-w-4xl mx-auto p-8">
+	{#if fileWarning}
+		<div class="mb-6 rounded-md bg-amber-50 border border-amber-200 p-4 text-amber-800">
+			{fileWarning}
+		</div>
+	{/if}
+
 	<!-- Header -->
 	<div class="mb-8">
 		<a href="/tools" class="text-blue-600 hover:underline mb-4 inline-block">

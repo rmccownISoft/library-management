@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types'
 import { redirect, fail } from '@sveltejs/kit'
 import prisma from '$lib/prisma'
 import { ConditionStatus } from '$generated/prisma/enums'
-import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
+import { writeMultipleFilesAndPrismaCreate, summarizeFileFailures } from '$lib/server/fileService'
 import { EntityType } from '$generated/prisma/enums'
 import { logActivity } from '$lib/server/activityLog'
 
@@ -45,11 +45,21 @@ export const actions: Actions = {
 			throw redirect(303, '/login')
 		}
 		
-		const formData = await request.formData()
-		console.log('form data: ', formData)
+		let formData: FormData
+		try {
+			formData = await request.formData()
+		} catch (e) {
+			// Thrown when the request body exceeds BODY_SIZE_LIMIT before the
+			// action ever runs — surface a friendly message instead of a raw 500.
+			console.error('Failed to parse form data (body too large?):', e)
+			return fail(413, {
+				serverError: 'The files you selected are too large to upload. The maximum total upload size is 25 MB. Please use smaller or fewer files and try again.',
+				errors: {},
+				values: {}
+			})
+		}
 		// Extract files from form data and filter out empty files
 		const files = (formData.getAll('toolFiles') as Array<File>).filter(file => file.size > 0)
-		console.log('extracted files: ', files)
 
 		// Extract and validate form data
 		const name = formData.get('name') as string
@@ -89,6 +99,7 @@ export const actions: Actions = {
 		
 		// Create tool
 		let tool
+		let fileFailures: Array<{ file: File; error: Error }> = []
 		try {
 			tool = await prisma.tool.create({
 				data: {
@@ -101,17 +112,14 @@ export const actions: Actions = {
 				}
 			})
 
-			if (files.length && files[0].size > 0) {
+			if (files.length > 0) {
 				const fileResults = await writeMultipleFilesAndPrismaCreate(files, {
 					entityType: EntityType.TOOL,
 					entityId: tool.id,
 					uploadedBy: locals.user.id,
 					label: 'Tool Photo'
 				})
-
-				if (fileResults.failed.length > 0) {
-					console.error(`Failed to save ${fileResults.failed.length} file(s) for tool ${tool.id}`)
-				}
+				fileFailures = fileResults.failed
 			}
 
 			await logActivity({
@@ -119,8 +127,18 @@ export const actions: Actions = {
 				userId: locals.user.id,
 				payload: { name, description, categoryId, quantity, donor, conditionStatus },
 				success: true,
-				response: { toolId: tool.id }
+				response: { toolId: tool.id, filesUploaded: files.length - fileFailures.length, filesFailed: fileFailures.length }
 			})
+
+			if (fileFailures.length > 0) {
+				await logActivity({
+					action: 'FILE_UPLOAD_FAILED',
+					userId: locals.user.id,
+					payload: { entityType: 'TOOL', entityId: tool.id, fileNames: fileFailures.map(f => f.file.name) },
+					success: false,
+					response: { failures: fileFailures.map(f => ({ name: f.file.name, error: f.error.message })) }
+				})
+			}
 		} catch (e) {
 			console.error('Failed to create tool:', e)
 			await logActivity({
@@ -135,6 +153,11 @@ export const actions: Actions = {
 				errors: {},
 				values: { name, description, categoryId, quantity, donor, conditionStatus }
 			})
+		}
+
+		if (fileFailures.length > 0) {
+			const msg = `Tool saved, but ${fileFailures.length} file(s) could not be uploaded — ${summarizeFileFailures(fileFailures)}`
+			throw redirect(303, `/tools/${tool.id}?fileWarning=${encodeURIComponent(msg)}`)
 		}
 
 		throw redirect(303, `/tools/${tool.id}`)

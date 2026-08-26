@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { PageData } from './$types'
+    import type { PageData, ActionData } from './$types'
     import ToolForm from '$lib/components/ToolForm.svelte'
 
-    let { data } = $props<{ data: PageData }>()
+    let { data, form } = $props<{ data: PageData; form?: ActionData }>()
     let selectedImage = $state<{ id: string; fileName: string } | null>(null);
 
 </script>
@@ -19,8 +19,14 @@
         </h1>
     </div>
 
+    {#if form?.serverError}
+        <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4 text-red-800">
+            {form.serverError}
+        </div>
+    {/if}
+
     <!-- Tool Form -->
-    <ToolForm 
+    <ToolForm
         categories={data.categories}
         tool={data.tool}
         submitText="Update Tool"

@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types'
 import prisma from '$lib/prisma'
 import { error, redirect, fail } from '@sveltejs/kit'
 import { ConditionStatus, EntityType } from '$generated/prisma/enums'
-import { writeMultipleFilesAndPrismaCreate } from '$lib/server/fileService'
+import { writeMultipleFilesAndPrismaCreate, summarizeFileFailures } from '$lib/server/fileService'
 import { logActivity } from '$lib/server/activityLog'
 
 
@@ -71,8 +71,20 @@ export const actions: Actions = {
             throw error(400, 'Invalid tool ID')
         }
         
-        const formData = await request.formData()
-        
+        let formData: FormData
+        try {
+            formData = await request.formData()
+        } catch (e) {
+            // Thrown when the request body exceeds BODY_SIZE_LIMIT before the
+            // action ever runs — surface a friendly message instead of a raw 500.
+            console.error('Failed to parse form data (body too large?):', e)
+            return fail(413, {
+                serverError: 'The files you selected are too large to upload. The maximum total upload size is 25 MB. Please use smaller or fewer files and try again.',
+                errors: {},
+                values: {}
+            })
+        }
+
         // Extract files from form data and filter out empty files
         const files = (formData.getAll('toolFiles') as Array<File>).filter(file => file.size > 0)
         
@@ -113,6 +125,7 @@ export const actions: Actions = {
         }
         
         // Update tool
+        let fileFailures: Array<{ file: File; error: Error }> = []
         try {
             await prisma.tool.update({
                 where: { id: toolId },
@@ -127,12 +140,13 @@ export const actions: Actions = {
             })
 
             if (files.length > 0) {
-                await writeMultipleFilesAndPrismaCreate(files, {
+                const fileResults = await writeMultipleFilesAndPrismaCreate(files, {
                     entityType: EntityType.TOOL,
                     entityId: toolId,
                     uploadedBy: locals.user.id,
                     label: 'Tool Photo'
                 })
+                fileFailures = fileResults.failed
             }
 
             await logActivity({
@@ -140,8 +154,18 @@ export const actions: Actions = {
                 userId: locals.user.id,
                 payload: { toolId, name, description, categoryId, quantity, donor, conditionStatus },
                 success: true,
-                response: { toolId }
+                response: { toolId, filesUploaded: files.length - fileFailures.length, filesFailed: fileFailures.length }
             })
+
+            if (fileFailures.length > 0) {
+                await logActivity({
+                    action: 'FILE_UPLOAD_FAILED',
+                    userId: locals.user.id,
+                    payload: { entityType: 'TOOL', entityId: toolId, fileNames: fileFailures.map(f => f.file.name) },
+                    success: false,
+                    response: { failures: fileFailures.map(f => ({ name: f.file.name, error: f.error.message })) }
+                })
+            }
         } catch (e) {
             console.error('Failed to update tool:', e)
             await logActivity({
@@ -156,6 +180,11 @@ export const actions: Actions = {
                 errors: {},
                 values: { name, description, categoryId, quantity, donor, conditionStatus }
             })
+        }
+
+        if (fileFailures.length > 0) {
+            const msg = `Tool saved, but ${fileFailures.length} file(s) could not be uploaded — ${summarizeFileFailures(fileFailures)}`
+            throw redirect(303, `/tools/${toolId}?fileWarning=${encodeURIComponent(msg)}`)
         }
 
         throw redirect(303, `/tools/${toolId}`)
