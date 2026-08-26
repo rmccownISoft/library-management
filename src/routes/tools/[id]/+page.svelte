@@ -1,12 +1,14 @@
 <script lang="ts">
     import type { PageData } from './$types'
     import { enhance } from '$app/forms'
+	import { resolve } from '$app/paths'
+	import Button from '$lib/components/Button.svelte'
 
     let { data } = $props<{ data: PageData }>();
 	let showDeleteConfirm = $state(false);
 	let isDeleting = $state(false);
 	let selectedImage = $state<{ id: number; fileName: string } | null>(null);
-	
+	$inspect(data)
 	// Format date helper
 	function formatDate(date: Date | string) {
 		return new Date(date).toLocaleDateString('en-US', {
@@ -33,7 +35,10 @@
 <div class="max-w-4xl mx-auto p-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<a href="/tools" class="text-blue-600 hover:underline mb-4 inline-block">
+		<a 
+			href={resolve("/tools")}
+			class="text-blue-600 hover:underline mb-4 inline-block"
+		>
 			← Back to Tools
 		</a>
 		
@@ -51,7 +56,7 @@
 			{#if data.user}
 				<div class="flex gap-2">
 					<a 
-						href="/tools/{data.tool.id}/edit"
+						href={resolve("/tools/{data.tool.id}/edit")}
 						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 					>
 						Edit Tool
@@ -78,15 +83,10 @@
 			</div>
 			
 			<div>
-				<p class="text-sm text-gray-600">Availability</p>
+				<p class="text-sm text-gray-600">Availability:</p>
 				<p class="font-medium {data.tool.availableCount > 0 ? 'text-green-700' : 'text-red-600'}">
 					{data.tool.availableCount} of {data.tool.quantity} available
 				</p>
-				{#if data.tool.checkedOutCount > 0}
-					<p class="text-sm text-amber-600">
-						{data.tool.checkedOutCount} checked out · due {new Date(data.tool.soonestDueDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-					</p>
-				{/if}
 			</div>
 			
 			{#if data.tool.donor}
@@ -101,11 +101,30 @@
 				<p class="font-medium text-gray-900">{data.tool.conditionStatus.replace('_', ' ')}</p>
 			</div>
 		</div>
-		
+
 		{#if data.tool.description}
 			<div class="mt-4 pt-4 border-t border-gray-200">
 				<p class="text-sm text-gray-600 mb-1">Description</p>
 				<p class="text-gray-900">{data.tool.description}</p>
+			</div>
+		{/if}
+		{#if data.tool.checkedOutCount > 0}
+			<div class="mt-4 pt-4 border-t border-gray-200">
+				<p class="text-sm text-gray-600 mb-2">
+					Current Checked Outs
+				</p>
+				<ul class="space-y-1">
+					{#each data.tool.checkouts as checkout (checkout)}
+						<li class="flex justify-between font-medium text-gray-900">
+                		    <a href={resolve('/patrons/[id]', { id: String(checkout.patron.id) })} class="text-blue-600 hover:underline">
+                		        {checkout.patron.firstName} {checkout.patron.lastName}
+                		    </a>
+                		    <span class="text-gray-600">
+                		        due {new Date(checkout.dueDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                		    </span>
+                		</li>
+					{/each}
+				</ul>
 			</div>
 		{/if}
 	</div>
@@ -115,7 +134,7 @@
 		<div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 			<h2 class="text-xl font-semibold mb-4 text-gray-900">Images</h2>
 			<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-				{#each data.tool.files as file}
+				{#each data.tool.files as file (file.id)}
 					<button
 						type="button"
 						onclick={() => selectedImage = file}
@@ -137,7 +156,7 @@
 		<div class="bg-white border border-gray-200 rounded-lg p-6">
 			<h2 class="text-xl font-semibold mb-4 text-gray-900">Damage History</h2>
 			<div class="space-y-4">
-				{#each data.tool.damageReports as report}
+				{#each data.tool.damageReports as report (report.id)}
 					<div class="border-l-4 border-red-500 pl-4 py-2">
 						<p class="text-gray-900 mb-2">{report.notes}</p>
 						<p class="text-sm text-gray-600">
