@@ -27,11 +27,20 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			},
 			checkouts: {
 				where: { status: 'CHECKED_OUT' },
-				select: { dueDate: true }
+				select: {
+					dueDate: true,
+					patron: {
+						select: {
+							id: true,
+							firstName: true,
+							lastName: true
+						}
+					}
+				}
 			}
         }
     })
-
+	console.log('tool: ', JSON.stringify(tool))
     if (!tool) {
         throw error(404, 'Tool not found')
     }
@@ -43,7 +52,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         ? checkouts.reduce((min, c) => c.dueDate < min ? c.dueDate : min, checkouts[0].dueDate)
         : null
 
-    return { tool: { ...toolData, checkedOutCount, availableCount, soonestDueDate } }
+    return { tool: { ...toolData, checkedOutCount, availableCount, soonestDueDate, checkouts } }
 }
 
 
