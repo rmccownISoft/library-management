@@ -618,3 +618,5 @@ This is an active development project. Please refer to the development guide in 
 [Add your license here]
 
 
+## AI
+Claude auto-runs PR review skill on PR to master
