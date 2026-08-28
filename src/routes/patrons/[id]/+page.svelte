@@ -39,6 +39,14 @@
 		data.patron.checkouts?.filter((c: { status: string }) => c.status === 'CHECKED_OUT').length || 0
 	)
 
+	// Calculate checkouts that are currently overdue (checked out, past due date, not yet returned)
+	const currentlyOverdueCount = $derived(
+		data.patron.checkouts?.filter(
+			(c: { status: string; dueDate: Date | string }) =>
+				c.status === 'CHECKED_OUT' && new Date(c.dueDate) < new Date()
+		).length || 0
+	)
+
 	// Get checkout status color
 	function getCheckoutStatusColor(status: string) {
 		switch (status) {
@@ -238,8 +246,8 @@
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 			<div class="text-center">
-				<div class="text-2xl font-bold text-gray-900">{data.patron.overdueCount}</div>
-				<div class="text-sm text-gray-600">Overdue Items</div>
+				<div class="text-2xl font-bold text-gray-900">{currentlyOverdueCount}</div>
+				<div class="text-sm text-gray-600">Currently Overdue</div>
 			</div>
 
 			<div class="text-center">
