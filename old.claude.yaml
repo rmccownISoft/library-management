@@ -1,0 +1,46 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]   # fires when a PR opens or leaves draft
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # write, not read — so Claude can post the review as a comment
+      id-token: write
+      actions: read          # lets Claude read CI results
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # full history — the review skill diffs your branch against base
+
+      # Lets the runner clone the PRIVATE org marketplace repo below.
+      # Requires a secret named ORG_PLUGINS_TOKEN — a token with read access to
+      # ISoft-Data-Systems/claude-plugins. Add it under:
+      # repo → Settings → Secrets and variables → Actions → New repository secret
+      - name: Authenticate git for the private marketplace
+        run: >
+          git config --global
+          url."https://x-access-token:${{ secrets.ORG_PLUGINS_TOKEN }}@github.com/".insteadOf
+          "https://github.com/"
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # --- pull the org marketplace, then install the plugin from it ---
+          plugin_marketplaces: |
+            https://github.com/ISoft-Data-Systems/claude-plugins.git
+          plugins: |
+            isoft-dev@isoft-data-systems
+
+          # --- run the org skill; the slash command forces a user-invocable-only skill ---
+          prompt: "/pre-pr-review"
+
+          additional_permissions: |
+            actions: read

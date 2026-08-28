@@ -2,35 +2,58 @@ name: Claude PR Review
 
 on:
   pull_request:
-    types: [opened, ready_for_review]   # fires when a PR opens or leaves draft
+    # opened + ready_for_review = your originals; reopened re-reviews when a
+    # closed PR is reopened. No synchronize, so pushing new commits does NOT
+    # trigger a fresh review (keeps the PR from filling up with repeat comments).
+    types: [opened, ready_for_review, reopened]
 
 jobs:
   claude-review:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write   # write, not read — so Claude can post the review as a comment
-      id-token: write
+      pull-requests: write   # post the review AND the inline comments
+      id-token: write        # required for the Claude GitHub App OIDC token exchange
       actions: read          # lets Claude read CI results
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0     # full history — the review skill diffs your branch against base
+          fetch-depth: 0     # full history - the review skill diffs the branch against base
+
+      # ONLY needed if rmccownISoft/my-claude-plugins is PRIVATE.
+      # ORG_PLUGINS_TOKEN must have read access to that repo.
+      # If the marketplace repo is PUBLIC, delete this entire step.
+      - name: Authenticate git for the private marketplace
+        run: >
+          git config --global
+          url."https://x-access-token:${{ secrets.ORG_PLUGINS_TOKEN }}@github.com/".insteadOf
+          "https://github.com/"
 
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # --- pull the org marketplace, then install the plugin from it ---
+          # --- pull THIS repo's marketplace, then install the pre-PR-review plugin ---
           plugin_marketplaces: |
-            https://github.com/ISoft-Data-Systems/claude-plugins.git
+            https://github.com/rmccownISoft/my-claude-plugins.git
           plugins: |
-            isoft-dev@isoft-data-systems
+            isoft-pre-pr-review@rmccown-claude-plugins
 
-          # --- run the org skill; the slash command forces a user-invocable-only skill ---
-          prompt: "/pre-pr-review"
+          # --- run the user-invocable review skill ---
+          prompt: "/isoft-pre-pr-review"
+
+          # Two things here:
+          # 1. Naming the inline-comment tool is what makes the Action start the
+          #    github_inline_comment MCP server. Without it, NO line-level comments.
+          # 2. bypassPermissions lets the skill run git, dispatch reviewer
+          #    subagents, and let those subagents run the test suite. CI is
+          #    non-interactive, so any un-approved tool would otherwise be
+          #    silently denied - and subagent permission inheritance is unreliable.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment"
+            --permission-mode bypassPermissions
 
           additional_permissions: |
             actions: read
