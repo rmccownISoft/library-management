@@ -74,6 +74,8 @@
 	function navigateToPage(p: number) {
 		const url = new URL(page.url);
 		url.searchParams.set('page', String(p));
+		// url is derived from the already-resolved page.url; only the query changes
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(url.toString());
 	}
 </script>

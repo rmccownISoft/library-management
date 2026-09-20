@@ -2,6 +2,7 @@
 	import type { PageData } from './$types'
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte'
 	import { invalidateAll } from '$app/navigation'
+	import { resolve } from '$app/paths'
 
 	let { data } = $props<{ data: PageData }>()
 
@@ -144,7 +145,7 @@
 
 	<!-- Header -->
 	<div class="mb-8">
-		<a href="/patrons" class="text-blue-600 hover:underline mb-4 inline-block">
+		<a href={resolve('/patrons')} class="text-blue-600 hover:underline mb-4 inline-block">
 			← Back to Patrons
 		</a>
 
@@ -162,12 +163,14 @@
 			<div class="flex gap-2">
 				{#if data.patron.active && !data.patron.blocked}
 					{#if data.patron.liabilityWaiverSigned && data.patron.userAgreementSigned}
+						<!-- eslint-disable svelte/no-navigation-without-resolve -- path is resolved; query string must be appended after resolve() -->
 						<a
-							href="/checkout?patronId={data.patron.id}"
+							href={`${resolve('/checkout')}?patronId=${data.patron.id}`}
 							class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
 						>
 							Checkout Tools
 						</a>
+						<!-- eslint-enable svelte/no-navigation-without-resolve -->
 					{:else}
 						<span
 							class="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
@@ -178,7 +181,7 @@
 					{/if}
 				{/if}
 				<a
-					href="/patrons/{data.patron.id}/edit"
+					href={resolve('/patrons/[id]/edit', { id: String(data.patron.id) })}
 					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 				>
 					Edit Patron
@@ -300,7 +303,7 @@
 							<p class="text-sm text-gray-500">Uploaded {formatDate(file.uploadedAt)}</p>
 						</div>
 						<a
-							href="/api/files/{file.id}"
+							href={resolve('/api/files/[id]', { id: String(file.id) })}
 							target="_blank"
 							class="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
 						>
@@ -334,7 +337,7 @@
 						{#each data.patron.checkouts as checkout (checkout.id)}
 							<tr class="border-b border-gray-100 hover:bg-gray-50">
 								<td class="py-3 px-4">
-									<a href="/tools/{checkout.tool.id}" class="text-blue-600 hover:underline font-medium">
+									<a href={resolve('/tools/[id]', { id: String(checkout.tool.id) })} class="text-blue-600 hover:underline font-medium">
 										{checkout.tool.name}
 									</a>
 								</td>

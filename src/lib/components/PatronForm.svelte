@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms'
+	import { resolve } from '$app/paths'
 	import Button from './Button.svelte'
 	import Input from './Input.svelte'
 
@@ -176,7 +177,7 @@
 					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 					</svg>
-					<a href="/api/files/{file.id}" class="underline hover:text-green-900">{file.fileName}</a>
+					<a href={resolve('/api/files/[id]', { id: String(file.id) })} class="underline hover:text-green-900">{file.fileName}</a>
 					<span class="text-gray-500">— uploaded {formatDate(file.uploadedAt)}</span>
 				</div>
 			{/if}
@@ -207,7 +208,7 @@
 					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 					</svg>
-					<a href="/api/files/{file.id}" class="underline hover:text-green-900">{file.fileName}</a>
+					<a href={resolve('/api/files/[id]', { id: String(file.id) })} class="underline hover:text-green-900">{file.fileName}</a>
 					<span class="text-gray-500">— uploaded {formatDate(file.uploadedAt)}</span>
 				</div>
 			{/if}

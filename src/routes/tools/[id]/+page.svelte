@@ -56,7 +56,7 @@
 			{#if data.user}
 				<div class="flex gap-2">
 					<a 
-						href={resolve("/tools/{data.tool.id}/edit")}
+						href={resolve('/tools/[id]/edit', { id: String(data.tool.id) })}
 						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 					>
 						Edit Tool

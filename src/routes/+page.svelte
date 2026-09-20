@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types'
+	import { resolve } from '$app/paths'
 	let { data }: { data: PageData } = $props()
 
 	function formatTime(t: string) {
@@ -26,7 +27,7 @@
 			A community-run tool library organized by neighbors for neighbors.  Brought to you with the support of <b class="whitespace-nowrap">NeighborWorks Lincoln</b> and <b class="whitespace-nowrap">First-Plymouth Church</b>
 		</p>
 		<a
-			href="/browse"
+			href={resolve('/browse')}
 			class="px-8 py-4 bg-[#912924] text-white text-lg font-semibold rounded-lg hover:bg-[#7a1f1b] transition-colors"
 		>Browse Our Tools</a>
 	</div>
@@ -95,7 +96,7 @@
 	<div class="max-w-6xl mx-auto">
 		<div class="text-center mb-12">
 			<h2 class="text-3xl font-bold text-gray-900">Popular Tools</h2>
-			<a href="/browse" class="text-[#912924] font-semibold hover:underline text-sm mt-2 inline-block">
+			<a href={resolve('/browse')} class="text-[#912924] font-semibold hover:underline text-sm mt-2 inline-block">
 				See all tools →
 			</a>
 		</div>

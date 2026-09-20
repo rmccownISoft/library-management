@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -12,7 +13,7 @@
 		{ label: 'Categories', href: '/admin/categories' },
 		{ label: 'Activity Log', href: '/admin/activity-log' },
 		{ label: 'Config', href: '/admin/config' }
-	];
+	] as const;
 </script>
 
 <div class="min-h-screen bg-gray-50">
@@ -29,7 +30,7 @@
 				{#each tabs as tab (tab.href)}
 					{@const isActive = page.url.pathname === tab.href}
 					<a
-						href={tab.href}
+						href={resolve(tab.href)}
 						class={[
 							'whitespace-nowrap pb-3 text-sm font-medium border-b-2 transition-colors',
 							isActive

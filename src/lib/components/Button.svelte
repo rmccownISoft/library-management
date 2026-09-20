@@ -67,6 +67,7 @@
 </script>
 
 {#if type === 'a' && href}
+	<!-- eslint-disable svelte/no-navigation-without-resolve -- href is a generic prop; callers pass an already-resolved path -->
 	<a
 		{href}
 		class="{baseStyles} {className}"
@@ -75,6 +76,7 @@
 	>
 		{@render children?.()}
 	</a>
+	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 {:else}
 	<button
 		type={type === 'a' ? 'button' : type}
