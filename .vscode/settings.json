@@ -1,0 +1,30 @@
+{
+	// Format every file on save using Prettier. Prettier reads the project's
+	// .prettierrc automatically, so tabs / single quotes / print width / the
+	// Svelte + Tailwind plugins all apply with no extra config here.
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+
+	// Only format when a Prettier config file is present (it is: .prettierrc).
+	// This stops Prettier from reformatting files in unrelated folders.
+	"prettier.requireConfig": true,
+
+	// On save, also apply ESLint's auto-fixable fixes (the same ones
+	// `eslint --fix` would apply). Non-fixable problems stay underlined.
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+
+	// Make sure each language Prettier handles uses it as the formatter,
+	// even if you have another formatter installed globally.
+	"[svelte]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+	// Tell the ESLint extension which languages to lint. It needs "svelte"
+	// added explicitly so .svelte files get underlined like .ts/.js files.
+	"eslint.validate": ["javascript", "typescript", "svelte"]
+}
