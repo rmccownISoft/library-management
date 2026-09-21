@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types'
+    import { resolve } from '$app/paths'
     import ToolForm from '$lib/components/ToolForm.svelte'
 
     let { data } = $props<{ data: PageData }>()
@@ -10,7 +11,7 @@
 <div class="max-w-4xl mx-auto p-8">
     <!-- Header -->
     <div class="mb-8">
-        <a href="/tools/{data.tool.id}" class="text-blue-600 hover:underline mb-4 inline-block">
+        <a href={resolve('/tools/[id]', { id: String(data.tool.id) })} class="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Tool Details
         </a>
         

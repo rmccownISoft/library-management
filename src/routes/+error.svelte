@@ -1,6 +1,8 @@
 <script lang="ts">
 	// In Svelte 5, error pages receive status and error via props instead of using stores
-	let { status, error }: { 
+	import { resolve } from '$app/paths';
+
+	let { status, error }: {
 		status: number;
 		error: App.Error | null;
 	} = $props();
@@ -32,7 +34,7 @@
 
 		<div class="space-y-3">
 			<a
-				href="/"
+				href={resolve('/')}
 				class="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
 			>
 				Return to Home

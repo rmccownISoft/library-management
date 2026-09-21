@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { resolve } from '$app/paths';
 
 	let { data }: { data: PageData } = $props();
 
@@ -125,7 +126,7 @@
 		{#if data.user}
 			<div class="flex justify-end mb-4">
 				<a
-					href="/tools"
+					href={resolve('/tools')}
 					class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
 				>
 					Manage Tools
@@ -270,7 +271,7 @@
 												</span>
 											</div>
 											{#if data.user}
-												<a href="/tools/{tool.id}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">→</a>
+												<a href={resolve('/tools/[id]', { id: String(tool.id) })} class="text-blue-600 hover:text-blue-800 text-sm font-medium">→</a>
 											{/if}
 										</div>
 									</div>
@@ -313,7 +314,7 @@
 											</span>
 										</div>
 										{#if data.user}
-											<a href="/tools/{tool.id}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+											<a href={resolve('/tools/[id]', { id: String(tool.id) })} class="text-blue-600 hover:text-blue-800 font-medium text-sm">
 												View Details →
 											</a>
 										{/if}

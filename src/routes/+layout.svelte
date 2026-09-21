@@ -1,5 +1,6 @@
 <script>
 	import { page } from '$app/state'
+	import { resolve } from '$app/paths'
 	import '../app.css'
 
 	let { children, data } = $props()
@@ -17,7 +18,7 @@
 	<nav>
 		<div class="nav-top">
 			<div class="nav-brand">
-				<a href="/">Near South Lincoln Tool Library</a>
+				<a href={resolve('/')}>Near South Lincoln Tool Library</a>
 			</div>
 
 			{#if data?.user}
@@ -33,8 +34,8 @@
 				</button>
 			{:else}
 				<div style="display: flex; gap: 0.75rem; align-items: center;">
-    				<a href="/browse" class="logout-button">Browse Tools</a>
-    				<a href="/login" class="logout-button">Login</a>
+    				<a href={resolve('/browse')} class="logout-button">Browse Tools</a>
+    				<a href={resolve('/login')} class="logout-button">Login</a>
   				</div>
 			{/if}
 		</div>
@@ -43,12 +44,12 @@
 			<!-- Desktop layout -->
 			<div class="nav-desktop">
 				<div class="nav-links">
-					<a href="/" class:active={page.url.pathname === '/'}> Home </a>
-					<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
-					<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
-					<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
+					<a href={resolve('/')} class:active={page.url.pathname === '/'}> Home </a>
+					<a href={resolve('/patrons')} class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
+					<a href={resolve('/tools')} class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+					<a href={resolve('/checkout')} class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
 					{#if data.user?.role === 'ADMIN'}
-						<a href="/admin/categories" class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
+						<a href={resolve('/admin/categories')} class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
 					{/if}
 				</div>
 				<div class="nav-user">
@@ -62,12 +63,12 @@
 			<!-- Mobile dropdown -->
 			{#if menuOpen}
 				<div class="nav-mobile-menu">
-					<a href="/" class:active={page.url.pathname === '/'}> Home </a>
-					<a href="/patrons" class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
-					<a href="/tools" class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
-					<a href="/checkout" class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
+					<a href={resolve('/')} class:active={page.url.pathname === '/'}> Home </a>
+					<a href={resolve('/patrons')} class:active={page.url.pathname.startsWith('/patrons')}> Patrons </a>
+					<a href={resolve('/tools')} class:active={page.url.pathname.startsWith('/tools')}> Tools </a>
+					<a href={resolve('/checkout')} class:active={page.url.pathname.startsWith('/checkout')}> Checkout </a>
 					{#if data.user?.role === 'ADMIN'}
-						<a href="/admin/categories" class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
+						<a href={resolve('/admin/categories')} class:active={page.url.pathname.startsWith('/admin')}> Admin </a>
 					{/if}
 					<div class="mobile-menu-footer">
 						<span class="user-name">{data.user.name}</span>

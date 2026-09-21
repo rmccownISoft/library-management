@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PatronModel } from '../../generated/prisma/models'
+    import { resolve } from '$app/paths'
     import { SvelteURLSearchParams } from 'svelte/reactivity'
     import Button from '$lib/components/Button.svelte'
 
@@ -68,7 +69,7 @@
                             {/each}
                         </ul>
                         <a
-                            href="/patrons/{selectedPatron.id}/edit"
+                            href={resolve('/patrons/[id]/edit', { id: String(selectedPatron.id) })}
                             class="{selectedPatron.blocked ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'} mt-3 inline-block px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm"
                         >
                             Edit Patron

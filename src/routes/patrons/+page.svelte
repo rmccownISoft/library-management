@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types'
+    import { resolve } from '$app/paths'
     import Button from '$lib/components/Button.svelte'
 
     let { data }: { data: PageData } = $props()
@@ -16,7 +17,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Patrons</h1>
-        <Button variant="success" type="a" href="/patrons/new">
+        <Button variant="success" type="a" href={resolve('/patrons/new')}>
             + Add New Patron
         </Button>
     </div>

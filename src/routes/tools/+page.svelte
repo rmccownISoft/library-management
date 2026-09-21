@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types'
+    import { resolve } from '$app/paths'
     import Button from '$lib/components/Button.svelte'
     import { SvelteMap } from 'svelte/reactivity'
     let { data }: { data: PageData } = $props()
@@ -127,7 +128,7 @@
 
             <!-- Add New Tool Button (Only for authenticated users) -->
             {#if data.user}
-                <Button variant="success" type="a" href="/tools/new">
+                <Button variant="success" type="a" href={resolve('/tools/new')}>
                     + Add New Tool
                 </Button>
             {/if}
@@ -221,7 +222,7 @@
                                         </span>
                                     </div>
                                     <a
-                                        href="/tools/{tool.id}"
+                                        href={resolve('/tools/[id]', { id: String(tool.id) })}
                                         class="text-blue-600 hover:text-blue-800 font-medium text-sm"
                                     >
                                         View Details →

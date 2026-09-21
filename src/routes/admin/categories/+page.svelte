@@ -83,7 +83,6 @@
 		editName = '';
 		editParentId = '';
 	}
-
 </script>
 
 <Toast />
@@ -92,13 +91,12 @@
 	<!-- Header -->
 	<div class="mb-6">
 		<h1 class="text-3xl font-bold text-gray-900">Category Management</h1>
-		<p class="text-gray-600 mt-2">Manage tool categories and subcategories</p>
+		<p class="mt-2 text-gray-600">Manage tool categories and subcategories</p>
 	</div>
 
-
 	<!-- Category List -->
-	<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
-		<div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+	<div class="mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white">
+		<div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
 			<h2 class="text-xl font-semibold text-gray-900">Existing Categories</h2>
 		</div>
 
@@ -108,14 +106,14 @@
 			</div>
 		{:else}
 			<!-- Desktop Table -->
-			<div class="hidden md:block overflow-x-auto">
+			<div class="hidden overflow-x-auto md:block">
 				<table class="w-full">
-					<thead class="bg-gray-50 border-b border-gray-200">
+					<thead class="border-b border-gray-200 bg-gray-50">
 						<tr>
-							<th class="text-left px-6 py-3 font-semibold text-gray-900">Category Name</th>
-							<th class="text-left px-6 py-3 font-semibold text-gray-900">Tools</th>
-							<th class="text-left px-6 py-3 font-semibold text-gray-900">Parent Category</th>
-							<th class="text-right px-6 py-3 font-semibold text-gray-900">Actions</th>
+							<th class="px-6 py-3 text-left font-semibold text-gray-900">Category Name</th>
+							<th class="px-6 py-3 text-left font-semibold text-gray-900">Tools</th>
+							<th class="px-6 py-3 text-left font-semibold text-gray-900">Parent Category</th>
+							<th class="px-6 py-3 text-right font-semibold text-gray-900">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -132,13 +130,19 @@
 												return async ({ result, update }) => {
 													await update();
 													isUpdating = false;
-													
+
 													if (result.type === 'success' && result.data?.success) {
-														const message = typeof result.data.message === 'string' ? result.data.message : 'Category updated successfully';
+														const message =
+															typeof result.data.message === 'string'
+																? result.data.message
+																: 'Category updated successfully';
 														toastStore.success(message);
 														cancelEdit();
 													} else if (result.type === 'failure' && result.data?.error) {
-														const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+														const error =
+															typeof result.data.error === 'string'
+																? result.data.error
+																: 'An error occurred';
 														toastStore.error(error);
 													}
 												};
@@ -148,17 +152,17 @@
 
 											{#if form?.error && form?.editingId === category.id}
 												<div
-													class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
+													class="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800"
 												>
 													✗ {form.error}
 												</div>
 											{/if}
 
-											<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 												<div>
 													<label
 														for="edit-name-{category.id}"
-														class="block text-sm font-medium text-gray-700 mb-1"
+														class="mb-1 block text-sm font-medium text-gray-700"
 													>
 														Category Name
 													</label>
@@ -168,14 +172,14 @@
 														name="name"
 														bind:value={editName}
 														required
-														class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+														class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 													/>
 												</div>
 
 												<div>
 													<label
 														for="edit-parent-{category.id}"
-														class="block text-sm font-medium text-gray-700 mb-1"
+														class="mb-1 block text-sm font-medium text-gray-700"
 													>
 														Parent Category
 													</label>
@@ -183,7 +187,7 @@
 														id="edit-parent-{category.id}"
 														name="parentId"
 														bind:value={editParentId}
-														class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+														class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 													>
 														<option value="">None (Top Level)</option>
 														{#each parentOptions as option}
@@ -197,11 +201,11 @@
 												</div>
 											</div>
 
-											<div class="flex gap-2 mt-4">
+											<div class="mt-4 flex gap-2">
 												<button
 													type="submit"
 													disabled={isUpdating}
-													class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors font-medium"
+													class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
 												>
 													{isUpdating ? 'Saving...' : 'Save Changes'}
 												</button>
@@ -209,7 +213,7 @@
 													type="button"
 													onclick={cancelEdit}
 													disabled={isUpdating}
-													class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+													class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50"
 												>
 													Cancel
 												</button>
@@ -238,7 +242,7 @@
 										<button
 											type="button"
 											onclick={() => startEdit(category)}
-											class="text-blue-600 hover:text-blue-800 font-medium text-sm"
+											class="text-sm font-medium text-blue-600 hover:text-blue-800"
 										>
 											Edit
 										</button>
@@ -255,7 +259,7 @@
 				{#each flatCategories as category}
 					{#if editingId === category.id}
 						<!-- Edit Mode Card -->
-						<div class="p-4 border-b border-gray-100 bg-blue-50">
+						<div class="border-b border-gray-100 bg-blue-50 p-4">
 							<form
 								method="POST"
 								action="?/update"
@@ -264,13 +268,19 @@
 									return async ({ result, update }) => {
 										await update();
 										isUpdating = false;
-										
+
 										if (result.type === 'success' && result.data?.success) {
-											const message = typeof result.data.message === 'string' ? result.data.message : 'Category updated successfully';
+											const message =
+												typeof result.data.message === 'string'
+													? result.data.message
+													: 'Category updated successfully';
 											toastStore.success(message);
 											cancelEdit();
 										} else if (result.type === 'failure' && result.data?.error) {
-											const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+											const error =
+												typeof result.data.error === 'string'
+													? result.data.error
+													: 'An error occurred';
 											toastStore.error(error);
 										}
 									};
@@ -280,7 +290,7 @@
 
 								{#if form?.error && form?.editingId === category.id}
 									<div
-										class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
+										class="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800"
 									>
 										✗ {form.error}
 									</div>
@@ -290,7 +300,7 @@
 									<div>
 										<label
 											for="edit-name-mobile-{category.id}"
-											class="block text-sm font-medium text-gray-700 mb-1"
+											class="mb-1 block text-sm font-medium text-gray-700"
 										>
 											Category Name
 										</label>
@@ -300,14 +310,14 @@
 											name="name"
 											bind:value={editName}
 											required
-											class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+											class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
 
 									<div>
 										<label
 											for="edit-parent-mobile-{category.id}"
-											class="block text-sm font-medium text-gray-700 mb-1"
+											class="mb-1 block text-sm font-medium text-gray-700"
 										>
 											Parent Category
 										</label>
@@ -315,7 +325,7 @@
 											id="edit-parent-mobile-{category.id}"
 											name="parentId"
 											bind:value={editParentId}
-											class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+											class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 										>
 											<option value="">None (Top Level)</option>
 											{#each parentOptions as option}
@@ -327,11 +337,11 @@
 									</div>
 								</div>
 
-								<div class="flex gap-2 mt-4">
+								<div class="mt-4 flex gap-2">
 									<button
 										type="submit"
 										disabled={isUpdating}
-										class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors font-medium"
+										class="flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
 									>
 										{isUpdating ? 'Saving...' : 'Save'}
 									</button>
@@ -339,7 +349,7 @@
 										type="button"
 										onclick={cancelEdit}
 										disabled={isUpdating}
-										class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+										class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50"
 									>
 										Cancel
 									</button>
@@ -349,25 +359,25 @@
 					{:else}
 						<!-- View Mode Card -->
 						<div
-							class="p-4 border-b border-gray-100 last:border-b-0"
+							class="border-b border-gray-100 p-4 last:border-b-0"
 							style="padding-left: {category.level * 1.5 + 1}rem"
 						>
-							<div class="flex justify-between items-start mb-2">
+							<div class="mb-2 flex items-start justify-between">
 								<div class="font-medium text-gray-900">
 									{#if category.level > 0}
-										<span class="text-gray-400 mr-1">└─</span>
+										<span class="mr-1 text-gray-400">└─</span>
 									{/if}
 									{category.name}
 								</div>
 								<button
 									type="button"
 									onclick={() => startEdit(category)}
-									class="text-blue-600 hover:text-blue-800 font-medium text-sm ml-2"
+									class="ml-2 text-sm font-medium text-blue-600 hover:text-blue-800"
 								>
 									Edit
 								</button>
 							</div>
-							<div class="text-sm text-gray-600 space-y-1">
+							<div class="space-y-1 text-sm text-gray-600">
 								<div>Tools: {category.toolCount}</div>
 								{#if category.parentName}
 									<div>Parent: {category.parentName}</div>
@@ -381,8 +391,8 @@
 	</div>
 
 	<!-- Create New Category Form -->
-	<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-		<div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+	<div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
+		<div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
 			<h2 class="text-xl font-semibold text-gray-900">Create New Category</h2>
 		</div>
 
@@ -395,23 +405,27 @@
 					return async ({ result, update }) => {
 						await update();
 						isCreating = false;
-						
+
 						if (result.type === 'success' && result.data?.success) {
-							const message = typeof result.data.message === 'string' ? result.data.message : 'Category created successfully';
+							const message =
+								typeof result.data.message === 'string'
+									? result.data.message
+									: 'Category created successfully';
 							toastStore.success(message);
 							// Clear form on success
 							createName = '';
 							createParentId = '';
 						} else if (result.type === 'failure' && result.data?.error) {
-							const error = typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
+							const error =
+								typeof result.data.error === 'string' ? result.data.error : 'An error occurred';
 							toastStore.error(error);
 						}
 					};
 				}}
 			>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div>
-						<label for="create-name" class="block text-sm font-medium text-gray-700 mb-1">
+						<label for="create-name" class="mb-1 block text-sm font-medium text-gray-700">
 							Category Name <span class="text-red-600">*</span>
 						</label>
 						<input
@@ -421,19 +435,19 @@
 							bind:value={createName}
 							required
 							placeholder="e.g., Hand Tools, Power Tools"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 						/>
 					</div>
 
 					<div>
-						<label for="create-parent" class="block text-sm font-medium text-gray-700 mb-1">
+						<label for="create-parent" class="mb-1 block text-sm font-medium text-gray-700">
 							Parent Category <span class="text-gray-500">(optional)</span>
 						</label>
 						<select
 							id="create-parent"
 							name="parentId"
 							bind:value={createParentId}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+							class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 						>
 							<option value="">None (Top Level)</option>
 							{#each flatCategories as category}

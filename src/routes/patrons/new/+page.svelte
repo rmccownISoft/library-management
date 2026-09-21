@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types'
+	import { resolve } from '$app/paths'
 	import PatronForm from '$lib/components/PatronForm.svelte'
 	
 	let { data, form } = $props<{ data: PageData; form?: ActionData }>()
@@ -24,7 +25,7 @@
 
 <div class="max-w-4xl mx-auto p-8">
 	<div class="mb-8">
-		<a href="/patrons" class="text-blue-600 hover:underline mb-4 inline-block">
+		<a href={resolve('/patrons')} class="text-blue-600 hover:underline mb-4 inline-block">
 			← Back to Patrons
 		</a>
 		<h1 class="text-3xl font-bold text-gray-900">Create New Patron</h1>

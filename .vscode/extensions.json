@@ -1,0 +1,5 @@
+{
+	// VSCode shows these as "Recommended" when someone opens this project.
+	// The settings in settings.json depend on all three being installed.
+	"recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "svelte.svelte-vscode"]
+}
